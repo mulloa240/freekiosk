@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 🔇 **Audio from previous scheduled URL continues playing after planner switches to next URL** (#158): When the URL planner transitioned between scheduled events, it called `setUrl()` to navigate the WebView to the new URL — but the previous page's JavaScript (including Web Audio, HTML5 `<audio>`, timers) kept running in the background because the same WebView instance was reused. Fixed by incrementing `webViewKey` on each planner URL transition, which forces React to fully unmount and remount the WebViewComponent. The underlying Android WebView is destroyed, terminating all background sessions. The same remount is applied when the planner reverts to the base URL at the end of a scheduled period.
 
+- 📸 **Screenshot key combination (Power + Volume Down) not disabled in kiosk mode** (#172): On Android, pressing Power + Volume Down takes a screenshot even when Device Owner lock task mode is active. Fixed by calling `DevicePolicyManager.setScreenCaptureDisabled(true)` when entering kiosk mode (Device Owner only), and re-enabling it on exit. Prevents both the screenshot itself and the screenshot toolbar/preview from appearing over kiosk content.
+
+- 🔄 **Auto-reload does not trigger on HTTP 5xx errors (e.g. 504 Gateway Timeout)** (#173): The "Reload on Error" feature only handled network-level failures (no connectivity, DNS failure) via `onError`. HTTP error responses like 504 Gateway Timeout are delivered via `onHttpError` and were only logged — no reload was triggered. Fixed by extending `handleHttpError` to apply the same 5-second auto-reload for any HTTP 5xx status code when "Reload on Error" is enabled.
+
+- 💾 **Custom User Agent not included in backup/restore** (#174): The `@kiosk_custom_user_agent` storage key was missing from the backup key list in `BackupService`. Exporting and re-importing a configuration would silently drop the Custom User Agent setting. Added to the backup keys list.
+
 
 ***
 

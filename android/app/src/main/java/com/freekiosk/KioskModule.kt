@@ -89,6 +89,11 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
 
                 activity.runOnUiThread {
                     try {
+                        val dpm = reactApplicationContext.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                        val adminComponent = ComponentName(reactApplicationContext, DeviceAdminReceiver::class.java)
+                        if (dpm.isDeviceOwnerApp(reactApplicationContext.packageName)) {
+                            dpm.setScreenCaptureDisabled(adminComponent, false)
+                        }
                         activity.disableKioskRestrictions()
                         activity.stopLockTask()
                         activity.finish()
@@ -183,6 +188,7 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
                             }
                             
                             dpm.setLockTaskPackages(adminComponent, uniqueWhitelist.toTypedArray())
+                            dpm.setScreenCaptureDisabled(adminComponent, true)
                             activity.startLockTask()
                             android.util.Log.d("KioskModule", "Full lock task started (Device Owner) with whitelist: $uniqueWhitelist")
                             // Update DE boot flag so the next LOCKED_BOOT_COMPLETED also locks immediately
@@ -231,6 +237,11 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
             if (activity != null && activity is MainActivity) {
                 activity.runOnUiThread {
                     try {
+                        val dpm = reactApplicationContext.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                        val adminComponent = ComponentName(reactApplicationContext, DeviceAdminReceiver::class.java)
+                        if (dpm.isDeviceOwnerApp(reactApplicationContext.packageName)) {
+                            dpm.setScreenCaptureDisabled(adminComponent, false)
+                        }
                         activity.stopLockTask()
                         android.util.Log.d("KioskModule", "Lock task stopped")
                         promise.resolve(true)

@@ -680,7 +680,18 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   };
 
   const handleHttpError = (event: any): void => {
-    console.error('[FreeKiosk] HTTP Error:', event.nativeEvent.statusCode, event.nativeEvent.url);
+    const statusCode = event.nativeEvent.statusCode;
+    console.error('[FreeKiosk] HTTP Error:', statusCode, event.nativeEvent.url);
+    if (autoReload && statusCode >= 500) {
+      setError(true);
+      setLoading(false);
+      webViewRef.current?.injectJavaScript('window.location.href = "about:blank"; true;');
+      setTimeout(() => {
+        setError(false);
+        setLoading(true);
+        setPageLoaded(false);
+      }, 5000);
+    }
   };
 
   const handleReload = (): void => {
