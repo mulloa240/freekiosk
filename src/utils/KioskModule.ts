@@ -42,6 +42,8 @@ interface KioskModuleInterface {
   bringToFront(): Promise<boolean>;
   // #180 — Gate the native tap-to-settings fallback to the kiosk screen only
   setKioskScreenActive(active: boolean): Promise<boolean>;
+  // #135 — Dismiss the soft keyboard at the window level (works for WebView inputs too)
+  hideKeyboard(): Promise<boolean>;
 }
 
 const { KioskModule } = NativeModules;

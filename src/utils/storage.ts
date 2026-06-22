@@ -1505,44 +1505,6 @@ export const StorageService = {
     }
   },
 
-  saveReturnButtonXPercent: async (value: number): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(KEYS.RETURN_BUTTON_X_PERCENT, String(value));
-    } catch (error) {
-      console.error('Error saving return button X percent:', error);
-    }
-  },
-
-  getReturnButtonXPercent: async (): Promise<number> => {
-    try {
-      const value = await AsyncStorage.getItem(KEYS.RETURN_BUTTON_X_PERCENT);
-      const parsed = value ? parseFloat(value) : 92;
-      return isNaN(parsed) ? 92 : Math.max(0, Math.min(100, parsed));
-    } catch (error) {
-      console.error('Error getting return button X percent:', error);
-      return 92;
-    }
-  },
-
-  saveReturnButtonYPercent: async (value: number): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(KEYS.RETURN_BUTTON_Y_PERCENT, String(value));
-    } catch (error) {
-      console.error('Error saving return button Y percent:', error);
-    }
-  },
-
-  getReturnButtonYPercent: async (): Promise<number> => {
-    try {
-      const value = await AsyncStorage.getItem(KEYS.RETURN_BUTTON_Y_PERCENT);
-      const parsed = value ? parseFloat(value) : 92;
-      return isNaN(parsed) ? 92 : Math.max(0, Math.min(100, parsed));
-    } catch (error) {
-      console.error('Error getting return button Y percent:', error);
-      return 92;
-    }
-  },
-
   // VOLUME UP 5-TAP
   saveVolumeUp5TapEnabled: async (value: boolean): Promise<void> => {
     try {

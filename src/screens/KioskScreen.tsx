@@ -365,6 +365,20 @@ const KioskScreen: React.FC<KioskScreenProps> = ({ navigation }) => {
     handleAutoBrightnessForScreensaver();
   }, [isScreensaverActive, autoBrightnessEnabled, autoBrightnessMin, autoBrightnessMax, autoBrightnessOffset, autoBrightnessInterval, screensaverBrightness, isScheduledSleep, screensaverType, displayMode]);
 
+  // #135 — Dismiss the soft keyboard whenever the screensaver activates.
+  // Keyboard.dismiss() (RN) only closes keyboards owned by RN TextInputs; a keyboard
+  // raised by an <input> inside the WebView (e.g. a web login field in Force Numeric
+  // mode) stays up because the screen never physically turns off in "Keep Screen On"
+  // mode, so ACTION_SCREEN_OFF never fires. The native hideKeyboard() acts on the
+  // activity window and closes it regardless of origin. Covers every activation path
+  // (inactivity timer, motion pre-check, MQTT/REST screen off, scheduled sleep).
+  useEffect(() => {
+    if (isScreensaverActive) {
+      Keyboard.dismiss();
+      KioskModule.hideKeyboard?.().catch(() => {});
+    }
+  }, [isScreensaverActive]);
+
   // Deactivate screensaver when the screen loses focus (navigating to Settings)
   // Only triggers cleanup on actual focus→blur transition (not when other deps change)
   useEffect(() => {

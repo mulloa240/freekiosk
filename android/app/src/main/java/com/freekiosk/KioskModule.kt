@@ -82,6 +82,23 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
         }
     }
 
+    // #135 — Dismiss the soft keyboard at the window level. React Native's
+    // Keyboard.dismiss() only affects RN TextInput components, so a keyboard
+    // raised by an <input> inside the WebView stays up when the screensaver
+    // activates (screen on, no ACTION_SCREEN_OFF). This closes it regardless.
+    @ReactMethod
+    fun hideKeyboard(promise: Promise) {
+        try {
+            val activity = reactApplicationContext.currentActivity
+            if (activity != null) {
+                KeyboardUtils.dismiss(activity)
+            }
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.resolve(false)
+        }
+    }
+
     @ReactMethod
     fun exitKioskMode(promise: Promise) {
         try {

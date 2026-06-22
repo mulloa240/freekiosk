@@ -75,6 +75,10 @@ class AppLauncherModule(reactContext: ReactApplicationContext) : ReactContextBas
                                         }
                                         if (allowNotifications) {
                                             lockTaskFeatures = lockTaskFeatures or android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS
+                                            // Android requires HOME when NOTIFICATIONS is enabled — without it
+                                            // setLockTaskFeatures() throws and aborts the whole feature update,
+                                            // leaving the notification panel disabled in multi-app mode (#191).
+                                            lockTaskFeatures = lockTaskFeatures or android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME
                                         }
                                         DebugLog.d("AppLauncherModule", "Lock task features: blockPowerButton=${!allowPowerButton}, notifications=$allowNotifications, systemInfo=$allowSystemInfo (flags=$lockTaskFeatures)")
                                     } catch (e: Exception) {
