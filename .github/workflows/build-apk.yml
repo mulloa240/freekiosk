@@ -40,6 +40,19 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
+      # Upstream ignora gradle.properties en git (lo genera cada dev en local,
+      # tipicamente con sus credenciales de firma). Sin el, Gradle corre con el
+      # heap por defecto de 512 MiB y el daemon muere por GC thrashing a mitad
+      # del build de React Native — se genera aca con la configuracion estandar
+      # del template de RN y memoria suficiente para el runner.
+      - name: Generate gradle.properties
+        run: |
+          cat > android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          android.useAndroidX=true
+          reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64
+          EOF
+
       - name: Build release APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
