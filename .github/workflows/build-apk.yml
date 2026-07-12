@@ -1,0 +1,52 @@
+# Compila el APK del fork Somelier Kiosk.
+#
+# El sandbox de desarrollo no puede descargar el Android SDK (dl.google.com
+# esta fuera de su politica de red), asi que el APK se compila aca, en los
+# runners de GitHub Actions -- mismo patron que el resto de la plataforma
+# (las imagenes Docker tambien se compilan en Actions).
+#
+# Firma: usa el fallback de debug.keystore ya presente en el repo (suficiente
+# para instalar por sideload en las tablets del PoC). Para produccion,
+# configurar keystore.properties via secrets y quitar el fallback.
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: somelier-kiosk-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 30

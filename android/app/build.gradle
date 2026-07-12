@@ -67,12 +67,12 @@ react {
 def enableProguardInReleaseBuilds = true
 
 /**
- * Play Store compliance: disable in-app self-update when building with -Pplaystore.
- * Usage:
- *   APK  (self-update ON):  ./gradlew assembleRelease
- *   AAB  (self-update OFF): ./gradlew bundleRelease -Pplaystore
+ * Fork Somelier: self-update SIEMPRE deshabilitado. Las actualizaciones del
+ * APK se gestionan centralizadamente (no desde el propio dispositivo), asi
+ * que la seccion de updates de la UI queda oculta y sus metodos como no-ops.
+ * (Upstream lo condicionaba a -Pplaystore; aca se fija en false.)
  */
-def enableSelfUpdate = !project.hasProperty('playstore')
+def enableSelfUpdate = false
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -104,22 +104,15 @@ android {
         // Expose self-update flag to both Kotlin (BuildConfig) and JS (via UpdateModule constants)
         buildConfigField "boolean", "ENABLE_SELF_UPDATE", "${enableSelfUpdate}"
 
-        // Play Store compliance: when -Pplaystore is set, replace REQUEST_INSTALL_PACKAGES
-        // with INTERNET (already declared → deduplicated by manifest merger → effectively removed)
-        // and disable UpdateInstallReceiver.
-        if (enableSelfUpdate) {
-            manifestPlaceholders = [
-                usesCleartextTraffic: "true",
-                updateReceiverEnabled: "true",
-                accessibilityServiceEnabled: "true"
-            ]
-        } else {
-            manifestPlaceholders = [
-                usesCleartextTraffic: "true",
-                updateReceiverEnabled: "false",
-                accessibilityServiceEnabled: "false"
-            ]
-        }
+        // Fork Somelier: updates deshabilitados (receiver apagado), pero el
+        // accessibility service se mantiene activo — lo usa el control remoto
+        // del REST API y no tiene relacion con el self-update. (Upstream los
+        // acoplaba porque su unico build sin updates era el de Play Store.)
+        manifestPlaceholders = [
+            usesCleartextTraffic: "true",
+            updateReceiverEnabled: "${enableSelfUpdate}",
+            accessibilityServiceEnabled: "true"
+        ]
     }
     
     signingConfigs {
