@@ -130,14 +130,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
   const handleSubmit = async (): Promise<void> => {
     if (isLockedOut) {
       Alert.alert(
-        '🔒 Locked Out',
-        `Too many failed attempts.\n\nTry again in ${Math.ceil(lockoutTimeRemaining / 60000)} minutes.`
+        '🔒 Bloqueado',
+        `Demasiados intentos fallidos.\n\nReintenta en ${Math.ceil(lockoutTimeRemaining / 60000)} minutos.`
       );
       return;
     }
 
     if (pin.length < 4) {
-      Alert.alert('Error', 'Password must be at least 4 characters');
+      Alert.alert('Error', 'La contrasena debe tener al menos 4 caracteres');
       return;
     }
 
@@ -156,22 +156,22 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
           setIsLockedOut(true);
           setLockoutTimeRemaining(result.lockoutTimeRemaining);
           Alert.alert(
-            '🔒 Too Many Failed Attempts',
-            result.message || 'Account locked for 15 minutes',
+            '🔒 Demasiados intentos fallidos',
+            result.message || 'Bloqueado por 15 minutos',
             [{ text: 'OK' }]
           );
         } else {
           setAttemptsRemaining(result.attemptsRemaining || 0);
           Alert.alert(
-            '❌ Incorrect PIN',
-            `${result.attemptsRemaining || 0} attempts remaining`,
-            [{ text: 'Try Again' }]
+            '❌ PIN incorrecto',
+            `Quedan ${result.attemptsRemaining || 0} intentos`,
+            [{ text: 'Reintentar' }]
           );
         }
       }
     } catch (error) {
       console.error('[PinInput] Error verifying PIN:', error);
-      Alert.alert('Error', 'An error occurred. Please try again.');
+      Alert.alert('Error', 'Ocurrio un error. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +182,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
       await KioskModule.launchEmergencyDial();
     } catch (e) {
       console.warn('[PinInput] launchEmergencyDial error:', e);
-      Alert.alert('Emergency Call', 'Unable to open the emergency dialer.');
+      Alert.alert('Llamada de emergencia', 'No se pudo abrir el marcador de emergencia.');
     }
   };
 
@@ -215,7 +215,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     } catch (e) {
       console.warn('[PinInput] flashlight toggle error:', e);
       setFlashlightOn(!next);
-      Alert.alert('Flashlight', 'Unable to change flashlight state.');
+      Alert.alert('Linterna', 'No se pudo cambiar el estado de la linterna.');
     } finally {
       setFlashlightBusy(false);
     }
@@ -227,7 +227,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     }
 
     if (!rotationLockAvailable || !RotationControlModule?.setLocked) {
-      Alert.alert('Rotation lock', 'Rotation lock is not available on this device right now.');
+      Alert.alert('Bloqueo de rotacion', 'El bloqueo de rotacion no esta disponible en este dispositivo.');
       return;
     }
 
@@ -240,7 +240,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     } catch (e) {
       console.warn('[PinInput] rotation toggle error:', e);
       setRotationLocked(!next);
-      Alert.alert('Rotation lock', 'Unable to change rotation lock state.');
+      Alert.alert('Bloqueo de rotacion', 'No se pudo cambiar el bloqueo de rotacion.');
     } finally {
       setRotationBusy(false);
     }
@@ -263,31 +263,31 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{pinMode === 'alphanumeric' ? 'Enter Password' : 'Enter PIN Code'}</Text>
+      <Text style={styles.title}>{pinMode === 'alphanumeric' ? 'Ingresa la contrasena' : 'Ingresa el codigo PIN'}</Text>
 
       {isLockedOut ? (
         <>
           <View style={styles.lockoutContainer}>
             <Text style={styles.lockoutIcon}>🔒</Text>
-            <Text style={styles.lockoutTitle}>Account Locked</Text>
+            <Text style={styles.lockoutTitle}>Cuenta bloqueada</Text>
             <Text style={styles.lockoutText}>
-              Too many failed attempts
+              Demasiados intentos fallidos
             </Text>
             <Text style={styles.lockoutTimer}>
-              Retry in: {formatTime(lockoutTimeRemaining)}
+              Reintenta en: {formatTime(lockoutTimeRemaining)}
             </Text>
           </View>
         </>
       ) : (
         <>
           {!hasPinConfigured && (
-            <Text style={styles.subtitle}>Default code: 1234</Text>
+            <Text style={styles.subtitle}>Codigo por defecto: 1234</Text>
           )}
 
           {attemptsRemaining < 5 && (
             <View style={styles.warningContainer}>
               <Text style={styles.warningText}>
-                ⚠️ {attemptsRemaining} attempts remaining
+                ⚠️ Quedan {attemptsRemaining} intentos
               </Text>
             </View>
           )}
@@ -300,7 +300,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
             secureTextEntry={true}
             keyboardType={pinMode === 'alphanumeric' ? 'default' : 'numeric'}
             maxLength={pinMode === 'alphanumeric' ? undefined : 6}
-            placeholder={pinMode === 'alphanumeric' ? 'Enter password' : '••••'}
+            placeholder={pinMode === 'alphanumeric' ? 'Ingresa la contrasena' : '••••'}
             placeholderTextColor="#999999"
             autoCapitalize={pinMode === 'alphanumeric' ? 'none' : undefined}
             autoCorrect={false}
@@ -354,14 +354,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
               disabled={flashlightBusy}
             >
               <Text style={styles.quickBtnIcon}>{flashlightOn ? '💡' : '🔦'}</Text>
-              <Text style={styles.quickBtnLabel}>{flashlightOn ? 'Light Off' : 'Light On'}</Text>
+              <Text style={styles.quickBtnLabel}>{flashlightOn ? 'Apagar luz' : 'Encender luz'}</Text>
             </TouchableOpacity>
           )}
 
           {showBrightnessButton && (
             <TouchableOpacity style={styles.quickBtn} onPress={() => setBrightnessDialogVisible(true)}>
               <Text style={styles.quickBtnIcon}>☀️</Text>
-              <Text style={styles.quickBtnLabel}>Brightness</Text>
+              <Text style={styles.quickBtnLabel}>Brillo</Text>
             </TouchableOpacity>
           )}
 
@@ -372,14 +372,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
               disabled={rotationBusy}
             >
               <Text style={styles.quickBtnIcon}>{rotationLocked ? '🔒' : '🔓'}</Text>
-              <Text style={styles.quickBtnLabel}>Rotate</Text>
+              <Text style={styles.quickBtnLabel}>Rotacion</Text>
             </TouchableOpacity>
           )}
 
           {showEmergencyButton && (
             <TouchableOpacity style={[styles.quickBtn, styles.emergencyBtn]} onPress={handleEmergencyCall}>
               <Text style={styles.quickBtnIcon}>🆘</Text>
-              <Text style={[styles.quickBtnLabel, styles.emergencyLabel]}>Emergency</Text>
+              <Text style={[styles.quickBtnLabel, styles.emergencyLabel]}>Emergencia</Text>
             </TouchableOpacity>
           )}
         </View>
