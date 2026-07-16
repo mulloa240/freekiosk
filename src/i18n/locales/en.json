@@ -1,0 +1,47 @@
+{
+  "welcome": {
+    "subtitle": "Professional Kiosk Application",
+    "featureSecure": "Secure kiosk mode",
+    "featurePerformance": "Optimal performance",
+    "featureOpenSource": "100% free & open source",
+    "startConfiguration": "🚀 Start Configuration",
+    "supportGithub": "⭐ Support us on GitHub"
+  },
+  "pin": {
+    "backToKiosk": "↩️ Back to Kiosk",
+    "enterPassword": "Enter Password",
+    "enterPinCode": "Enter PIN Code",
+    "passwordPlaceholder": "Enter password",
+    "defaultCode": "Default code: 1234",
+    "accountLocked": "Account Locked",
+    "tooManyAttempts": "Too many failed attempts",
+    "retryIn": "Retry in: {{time}}",
+    "attemptsRemaining": "⚠️ {{count}} attempts remaining",
+    "lockedOutTitle": "🔒 Too Many Failed Attempts",
+    "lockedOutMessage": "Account locked for 15 minutes",
+    "lockedTitle": "🔒 Locked Out",
+    "lockedRetryMinutes": "Too many failed attempts.\n\nTry again in {{minutes}} minutes.",
+    "incorrectPinTitle": "❌ Incorrect PIN",
+    "attemptsRemainingAlert": "{{count}} attempts remaining",
+    "tryAgain": "Try Again",
+    "passwordMinLength": "Password must be at least 4 characters",
+    "genericError": "An error occurred. Please try again.",
+    "lightOn": "Light On",
+    "lightOff": "Light Off",
+    "brightness": "Brightness",
+    "rotate": "Rotate",
+    "emergency": "Emergency",
+    "emergencyCallTitle": "Emergency Call",
+    "emergencyCallError": "Unable to open the emergency dialer.",
+    "flashlightTitle": "Flashlight",
+    "flashlightError": "Unable to change flashlight state.",
+    "rotationLockTitle": "Rotation lock",
+    "rotationLockUnavailable": "Rotation lock is not available on this device right now.",
+    "rotationLockError": "Unable to change rotation lock state."
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "error": "Error"
+  }
+}

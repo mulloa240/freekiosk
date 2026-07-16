@@ -1,0 +1,47 @@
+{
+  "welcome": {
+    "subtitle": "Aplicación profesional de kiosko",
+    "featureSecure": "Modo kiosko seguro",
+    "featurePerformance": "Rendimiento óptimo",
+    "featureOpenSource": "100% libre y de código abierto",
+    "startConfiguration": "🚀 Iniciar configuración",
+    "supportGithub": "⭐ Apóyanos en GitHub"
+  },
+  "pin": {
+    "backToKiosk": "↩️ Volver al kiosko",
+    "enterPassword": "Ingresa la contraseña",
+    "enterPinCode": "Ingresa el código PIN",
+    "passwordPlaceholder": "Ingresa la contraseña",
+    "defaultCode": "Código por defecto: 1234",
+    "accountLocked": "Cuenta bloqueada",
+    "tooManyAttempts": "Demasiados intentos fallidos",
+    "retryIn": "Reintenta en: {{time}}",
+    "attemptsRemaining": "⚠️ Quedan {{count}} intentos",
+    "lockedOutTitle": "🔒 Demasiados intentos fallidos",
+    "lockedOutMessage": "Bloqueado por 15 minutos",
+    "lockedTitle": "🔒 Bloqueado",
+    "lockedRetryMinutes": "Demasiados intentos fallidos.\n\nReintenta en {{minutes}} minutos.",
+    "incorrectPinTitle": "❌ PIN incorrecto",
+    "attemptsRemainingAlert": "Quedan {{count}} intentos",
+    "tryAgain": "Reintentar",
+    "passwordMinLength": "La contraseña debe tener al menos 4 caracteres",
+    "genericError": "Ocurrió un error. Intenta de nuevo.",
+    "lightOn": "Encender luz",
+    "lightOff": "Apagar luz",
+    "brightness": "Brillo",
+    "rotate": "Rotación",
+    "emergency": "Emergencia",
+    "emergencyCallTitle": "Llamada de emergencia",
+    "emergencyCallError": "No se pudo abrir el marcador de emergencia.",
+    "flashlightTitle": "Linterna",
+    "flashlightError": "No se pudo cambiar el estado de la linterna.",
+    "rotationLockTitle": "Bloqueo de rotación",
+    "rotationLockUnavailable": "El bloqueo de rotación no está disponible en este dispositivo.",
+    "rotationLockError": "No se pudo cambiar el bloqueo de rotación."
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "error": "Error"
+  }
+}

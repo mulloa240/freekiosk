@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, NativeModules, BackHandler } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import PinInput from '../components/PinInput';
 import { StorageService } from '../utils/storage';
 import { migrateOldPin, hasSecurePin } from '../utils/secureStorage';
@@ -15,6 +16,7 @@ interface PinScreenProps {
 }
 
 const PinScreen: React.FC<PinScreenProps> = ({ navigation }) => {
+  const { t } = useTranslation();
   const [storedPin, setStoredPin] = useState<string>('1234');
   const [migrationDone, setMigrationDone] = useState<boolean>(false);
   const [displayMode, setDisplayMode] = useState<'webview' | 'external_app' | 'media_player'>('webview');
@@ -116,7 +118,7 @@ const PinScreen: React.FC<PinScreenProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-        <Text style={styles.backButtonText}>↩️ Volver al kiosko</Text>
+        <Text style={styles.backButtonText}>{t('pin.backToKiosk')}</Text>
       </TouchableOpacity>
 
       <PinInput onSuccess={handleSuccess} storedPin={storedPin} />
