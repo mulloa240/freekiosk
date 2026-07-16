@@ -20,6 +20,7 @@ import UpdateModule from '../utils/UpdateModule';
 import { WebView } from 'react-native-webview';
 import type { WebViewErrorEvent, ShouldStartLoadRequest, WebViewRenderProcessGoneEvent } from 'react-native-webview/lib/WebViewTypes';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import PrintModule from '../utils/PrintModule';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -88,6 +89,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   basicAuthCredential,
   onRenderProcessGone,
 }, ref) => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const webViewRef = useRef<WebView>(null);
   // #190 — Host-view ref for pauseMedia/resumeMedia. react-native-webview's ref is a
@@ -871,24 +873,24 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
             </View>
 
             {/* Title */}
-            <Text style={styles.welcomeTitle}>FreeKiosk</Text>
+            <Text style={styles.welcomeTitle}>Somelier Kiosk</Text>
             <Text style={styles.welcomeSubtitle}>
-              Professional Kiosk Application
+              {t('welcome.subtitle')}
             </Text>
 
             {/* Features List */}
             <View style={styles.featuresList}>
               <FeatureItem
                 icon="🔒"
-                text="Secure kiosk mode"
+                text={t('welcome.featureSecure')}
               />
               <FeatureItem
                 icon="⚡"
-                text="Optimal performance"
+                text={t('welcome.featurePerformance')}
               />
               <FeatureItem
                 icon="🎯"
-                text="100% free & open source"
+                text={t('welcome.featureOpenSource')}
               />
             </View>
 
@@ -899,7 +901,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
               activeOpacity={0.8}
             >
               <Text style={styles.setupButtonText}>
-                🚀 Start Configuration
+                {t('welcome.startConfiguration')}
               </Text>
             </TouchableOpacity>
 
@@ -910,7 +912,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
               activeOpacity={0.7}
             >
               <Text style={styles.githubButtonText}>
-                ⭐ Support us on GitHub
+                {t('welcome.supportGithub')}
               </Text>
             </TouchableOpacity>
 

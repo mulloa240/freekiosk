@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, NativeModules } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { verifySecurePin, getLockoutStatus, hasSecurePin } from '../utils/secureStorage';
 import { StorageService } from '../utils/storage';
 import WifiDialog from './WifiDialog';
@@ -15,6 +16,7 @@ interface PinInputProps {
 }
 
 const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
+  const { t } = useTranslation();
   const [pin, setPin] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLockedOut, setIsLockedOut] = useState<boolean>(false);
@@ -130,14 +132,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
   const handleSubmit = async (): Promise<void> => {
     if (isLockedOut) {
       Alert.alert(
-        '🔒 Bloqueado',
-        `Demasiados intentos fallidos.\n\nReintenta en ${Math.ceil(lockoutTimeRemaining / 60000)} minutos.`
+        t('pin.lockedTitle'),
+        t('pin.lockedRetryMinutes', { minutes: Math.ceil(lockoutTimeRemaining / 60000) })
       );
       return;
     }
 
     if (pin.length < 4) {
-      Alert.alert('Error', 'La contrasena debe tener al menos 4 caracteres');
+      Alert.alert(t('common.error'), t('pin.passwordMinLength'));
       return;
     }
 
@@ -156,22 +158,22 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
           setIsLockedOut(true);
           setLockoutTimeRemaining(result.lockoutTimeRemaining);
           Alert.alert(
-            '🔒 Demasiados intentos fallidos',
-            result.message || 'Bloqueado por 15 minutos',
-            [{ text: 'OK' }]
+            t('pin.lockedOutTitle'),
+            result.message || t('pin.lockedOutMessage'),
+            [{ text: t('common.ok') }]
           );
         } else {
           setAttemptsRemaining(result.attemptsRemaining || 0);
           Alert.alert(
-            '❌ PIN incorrecto',
-            `Quedan ${result.attemptsRemaining || 0} intentos`,
-            [{ text: 'Reintentar' }]
+            t('pin.incorrectPinTitle'),
+            t('pin.attemptsRemainingAlert', { count: result.attemptsRemaining || 0 }),
+            [{ text: t('pin.tryAgain') }]
           );
         }
       }
     } catch (error) {
       console.error('[PinInput] Error verifying PIN:', error);
-      Alert.alert('Error', 'Ocurrio un error. Intenta de nuevo.');
+      Alert.alert(t('common.error'), t('pin.genericError'));
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +184,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
       await KioskModule.launchEmergencyDial();
     } catch (e) {
       console.warn('[PinInput] launchEmergencyDial error:', e);
-      Alert.alert('Llamada de emergencia', 'No se pudo abrir el marcador de emergencia.');
+      Alert.alert(t('pin.emergencyCallTitle'), t('pin.emergencyCallError'));
     }
   };
 
@@ -215,7 +217,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     } catch (e) {
       console.warn('[PinInput] flashlight toggle error:', e);
       setFlashlightOn(!next);
-      Alert.alert('Linterna', 'No se pudo cambiar el estado de la linterna.');
+      Alert.alert(t('pin.flashlightTitle'), t('pin.flashlightError'));
     } finally {
       setFlashlightBusy(false);
     }
@@ -227,7 +229,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     }
 
     if (!rotationLockAvailable || !RotationControlModule?.setLocked) {
-      Alert.alert('Bloqueo de rotacion', 'El bloqueo de rotacion no esta disponible en este dispositivo.');
+      Alert.alert(t('pin.rotationLockTitle'), t('pin.rotationLockUnavailable'));
       return;
     }
 
@@ -240,7 +242,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
     } catch (e) {
       console.warn('[PinInput] rotation toggle error:', e);
       setRotationLocked(!next);
-      Alert.alert('Bloqueo de rotacion', 'No se pudo cambiar el bloqueo de rotacion.');
+      Alert.alert(t('pin.rotationLockTitle'), t('pin.rotationLockError'));
     } finally {
       setRotationBusy(false);
     }
@@ -263,31 +265,31 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{pinMode === 'alphanumeric' ? 'Ingresa la contrasena' : 'Ingresa el codigo PIN'}</Text>
+      <Text style={styles.title}>{pinMode === 'alphanumeric' ? t('pin.enterPassword') : t('pin.enterPinCode')}</Text>
 
       {isLockedOut ? (
         <>
           <View style={styles.lockoutContainer}>
             <Text style={styles.lockoutIcon}>🔒</Text>
-            <Text style={styles.lockoutTitle}>Cuenta bloqueada</Text>
+            <Text style={styles.lockoutTitle}>{t('pin.accountLocked')}</Text>
             <Text style={styles.lockoutText}>
-              Demasiados intentos fallidos
+              {t('pin.tooManyAttempts')}
             </Text>
             <Text style={styles.lockoutTimer}>
-              Reintenta en: {formatTime(lockoutTimeRemaining)}
+              {t('pin.retryIn', { time: formatTime(lockoutTimeRemaining) })}
             </Text>
           </View>
         </>
       ) : (
         <>
           {!hasPinConfigured && (
-            <Text style={styles.subtitle}>Codigo por defecto: 1234</Text>
+            <Text style={styles.subtitle}>{t('pin.defaultCode')}</Text>
           )}
 
           {attemptsRemaining < 5 && (
             <View style={styles.warningContainer}>
               <Text style={styles.warningText}>
-                ⚠️ Quedan {attemptsRemaining} intentos
+                {t('pin.attemptsRemaining', { count: attemptsRemaining })}
               </Text>
             </View>
           )}
@@ -300,7 +302,7 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
             secureTextEntry={true}
             keyboardType={pinMode === 'alphanumeric' ? 'default' : 'numeric'}
             maxLength={pinMode === 'alphanumeric' ? undefined : 6}
-            placeholder={pinMode === 'alphanumeric' ? 'Ingresa la contrasena' : '••••'}
+            placeholder={pinMode === 'alphanumeric' ? t('pin.passwordPlaceholder') : '••••'}
             placeholderTextColor="#999999"
             autoCapitalize={pinMode === 'alphanumeric' ? 'none' : undefined}
             autoCorrect={false}
@@ -354,14 +356,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
               disabled={flashlightBusy}
             >
               <Text style={styles.quickBtnIcon}>{flashlightOn ? '💡' : '🔦'}</Text>
-              <Text style={styles.quickBtnLabel}>{flashlightOn ? 'Apagar luz' : 'Encender luz'}</Text>
+              <Text style={styles.quickBtnLabel}>{flashlightOn ? t('pin.lightOff') : t('pin.lightOn')}</Text>
             </TouchableOpacity>
           )}
 
           {showBrightnessButton && (
             <TouchableOpacity style={styles.quickBtn} onPress={() => setBrightnessDialogVisible(true)}>
               <Text style={styles.quickBtnIcon}>☀️</Text>
-              <Text style={styles.quickBtnLabel}>Brillo</Text>
+              <Text style={styles.quickBtnLabel}>{t('pin.brightness')}</Text>
             </TouchableOpacity>
           )}
 
@@ -372,14 +374,14 @@ const PinInput: React.FC<PinInputProps> = ({ onSuccess }) => {
               disabled={rotationBusy}
             >
               <Text style={styles.quickBtnIcon}>{rotationLocked ? '🔒' : '🔓'}</Text>
-              <Text style={styles.quickBtnLabel}>Rotacion</Text>
+              <Text style={styles.quickBtnLabel}>{t('pin.rotate')}</Text>
             </TouchableOpacity>
           )}
 
           {showEmergencyButton && (
             <TouchableOpacity style={[styles.quickBtn, styles.emergencyBtn]} onPress={handleEmergencyCall}>
               <Text style={styles.quickBtnIcon}>🆘</Text>
-              <Text style={[styles.quickBtnLabel, styles.emergencyLabel]}>Emergencia</Text>
+              <Text style={[styles.quickBtnLabel, styles.emergencyLabel]}>{t('pin.emergency')}</Text>
             </TouchableOpacity>
           )}
         </View>
