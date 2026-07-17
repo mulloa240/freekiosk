@@ -18,6 +18,7 @@ import {
   SettingsRadioGroup,
 } from '../../../components/settings';
 import { ManagedApp } from '../../../types/managedApps';
+import { buildSomelierUrl, extractSomelierToken } from '../../../config/somelier';
 import { Colors, Spacing, Typography } from '../../../theme';
 import AppLauncherModule, { AppInfo } from '../../../utils/AppLauncherModule';
 import { ScheduledEvent } from '../../../types/planner';
@@ -549,12 +550,20 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
           ) : (
             <>
               <SettingsInput
-                label=""
+                label="Token del dispositivo (Somelier)"
+                value={extractSomelierToken(url)}
+                onChangeText={(token: string) => onUrlChange(buildSomelierUrl(token))}
+                placeholder="Pegá acá el token del dispositivo"
+                hint="Se obtiene al registrar el dispositivo en el portal. La URL completa se arma sola."
+              />
+
+              <SettingsInput
+                label="URL completa (avanzado)"
                 value={url}
                 onChangeText={onUrlChange}
                 placeholder="https://example.com"
                 keyboardType="url"
-                hint="Example: https://www.freekiosk.app"
+                hint="Se completa sola con el token. Solo editá esto si sabés lo que hacés."
               />
 
               {url.trim().toLowerCase().startsWith('http://') && (

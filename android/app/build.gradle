@@ -67,12 +67,13 @@ react {
 def enableProguardInReleaseBuilds = true
 
 /**
- * Fork Somelier: self-update SIEMPRE deshabilitado. Las actualizaciones del
- * APK se gestionan centralizadamente (no desde el propio dispositivo), asi
- * que la seccion de updates de la UI queda oculta y sus metodos como no-ops.
- * (Upstream lo condicionaba a -Pplaystore; aca se fija en false.)
+ * Fork Somelier: self-update HABILITADO, apuntando a los GitHub Releases de
+ * este fork (mulloa240/freekiosk). El UpdateModule chequea la ultima release,
+ * y la app hace un auto-check al arrancar que descarga e instala si hay una
+ * version nueva. (Antes estaba en false para ocultar updates; se reactiva
+ * ahora que la distribucion pasa por nuestro propio repo.)
  */
-def enableSelfUpdate = false
+def enableSelfUpdate = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)

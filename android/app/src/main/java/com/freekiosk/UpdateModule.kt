@@ -88,9 +88,9 @@ class UpdateModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
         Thread {
             try {
                 val apiUrl = if (includeBeta) {
-                    "https://api.github.com/repos/rushb-fr/freekiosk/releases?per_page=10"
+                    "https://api.github.com/repos/mulloa240/freekiosk/releases?per_page=10"
                 } else {
-                    "https://api.github.com/repos/rushb-fr/freekiosk/releases/latest"
+                    "https://api.github.com/repos/mulloa240/freekiosk/releases/latest"
                 }
                 
                 android.util.Log.d("UpdateModule", "Checking updates: includeBeta=$includeBeta, url=$apiUrl")
@@ -143,7 +143,7 @@ class UpdateModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
                     
                     // Fallback to constructed URL if no asset found (should not happen)
                     if (apkUrl.isEmpty()) {
-                        apkUrl = "https://github.com/rushb-fr/freekiosk/releases/download/v${tagName}/FreeKiosk-v${tagName}.apk"
+                        apkUrl = "https://github.com/mulloa240/freekiosk/releases/download/v${tagName}/FreeKiosk-v${tagName}.apk"
                         android.util.Log.w("UpdateModule", "No APK asset found, using fallback URL")
                     }
                     
