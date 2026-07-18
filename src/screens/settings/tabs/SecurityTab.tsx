@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, Linking } from 'react-native';
 import {
   SettingsSection,
@@ -172,13 +173,14 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
   onLockscreenRotationLockEnabledChange,
   lockscreenRotationLockAvailable,
 }) => {
+  const { t } = useTranslation();
   return (
     <View>
       {/* Lock Mode */}
-      <SettingsSection title="Lock Mode" icon="lock">
+      <SettingsSection title={t('settings.security.tLockMode')} icon="lock">
         <SettingsSwitch
-          label="Enable Lock Mode"
-          hint="Prevent users from exiting the kiosk app. Requires PIN code to exit."
+          label={t('settings.security.lEnableLock')}
+          hint={t('settings.security.hLockMode')}
           value={kioskEnabled}
           onValueChange={onKioskEnabledChange}
         />
@@ -228,22 +230,22 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
           <>
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔌 Block Power Menu"
-              hint="When enabled, long-pressing the power button has no effect — it can only turn the screen on/off with a short press. When disabled, long-pressing shows the power menu (Restart/Shutdown). ⚠️ Blocking the power menu may cause audio to be muted on some Samsung/OneUI devices."
+              label={t('settings.security.lBlockPower')}
+              hint={t('settings.security.hBlockPower')}
               value={!allowPowerButton}
               onValueChange={(value) => onAllowPowerButtonChange(!value)}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="📡 Allow Notifications (NFC)"
-              hint="Enable notification dispatch to allow NFC tag reading in external apps. ⚠️ Note: Android will show the Home button (non-functional) and make the notification panel accessible when this is enabled."
+              label={t('settings.security.lAllowNfc')}
+              hint={t('settings.security.hAllowNfc')}
               value={allowNotifications}
               onValueChange={onAllowNotificationsChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="ℹ️ Show System Info Bar"
-              hint="Displays the native Android status bar (time, battery, connectivity) in the locked app. This also fixes audio being muted on some Samsung/OneUI devices in lock mode."
+              label={t('settings.security.lShowInfoBar')}
+              hint={t('settings.security.hInfoBar')}
               value={allowSystemInfo}
               onValueChange={onAllowSystemInfoChange}
             />
@@ -255,8 +257,8 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
           <>
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🛑 Block Factory Reset"
-              hint="Removes the 'Factory reset' option from the system Settings app (Device Owner restriction). Useful when the Settings app is on your multi-app whitelist, so locked users can't wipe the device. Persists across reboots. Takes effect immediately, even outside Lock Mode."
+              label={t('settings.security.lBlockFactory')}
+              hint={t('settings.security.hBlockFactory')}
               value={blockFactoryReset}
               onValueChange={onBlockFactoryResetChange}
             />
@@ -265,10 +267,10 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       </SettingsSection>
       
       {/* Auto Launch */}
-      <SettingsSection title="Auto Launch" icon="rocket-launch">
+      <SettingsSection title={t('settings.security.tAutoLaunch')} icon="rocket-launch">
         <SettingsSwitch
-          label="Launch on Boot"
-          hint="Automatically launch FreeKiosk when the device starts"
+          label={t('settings.security.lLaunchBoot')}
+          hint={t('settings.security.hLaunchBoot')}
           value={autoLaunchEnabled}
           onValueChange={onAutoLaunchChange}
         />
@@ -280,7 +282,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         </SettingsInfoBox>
         
         <SettingsButton
-          title="Open System Settings"
+          title={t('settings.security.tOpenSettings')}
           icon="cog-outline"
           variant="primary"
           onPress={onOpenSystemSettings}
@@ -291,8 +293,8 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
           <>
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔐 System screen-lock compatibility"
-              hint="Enable ONLY if you set a native Android screen-lock (PIN/password) on this device. FreeKiosk then (1) steps aside for the secure lock screen at boot instead of locking immediately — preventing the reboot freeze caused by the conflict between the kiosk and the secure lock screen — and (2) keeps the system keyguard active while pinned, so the screen-lock actually prompts after the screen turns off and back on (without this, lock-task mode disables the keyguard and the password never appears). ⚠️ A system screen-lock means someone must enter the password on the device after every reboot before the kiosk starts, and on every wake — unsuitable for unattended devices. For device security, the FreeKiosk exit PIN + Device Owner is usually the better choice."
+              label={t('settings.security.lScreenLockCompat')}
+              hint={t('settings.security.hScreenLockCompat')}
               value={screenLockCompatEnabled}
               onValueChange={onScreenLockCompatChange}
             />
@@ -309,7 +311,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         {/* Default launcher / persistent Home (#199) — works with or without Device Owner */}
         <View style={styles.divider} />
         <SettingsSwitch
-          label="🏠 Set FreeKiosk as default launcher"
+          label={t('settings.security.lDefaultLauncher')}
           hint={isDeviceOwner
             ? "Makes FreeKiosk the persistent Home app via Device Owner. The system then relaunches FreeKiosk by itself after every reboot and system update, without relying on the OEM 'Appear on top' / Autostart permissions that some brands (e.g. Samsung) reset on OS updates — the main cause of the kiosk dropping out after a reboot/update. The Home button also returns here. Turning this off restores your normal launcher."
             : "Opens the system Home-app picker so you can set FreeKiosk as the default launcher. The system then relaunches FreeKiosk at boot. Without Device Owner this choice is not locked — the user can change it back and some brands may reset it on a system update (Device Owner makes it permanent)."}
@@ -328,21 +330,21 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       </SettingsSection>
       
       {/* Return to Settings */}
-      <SettingsSection title="Return to Settings" icon="gesture-tap">
+      <SettingsSection title={t('settings.security.tReturnSettings')} icon="gesture-tap">
         <SettingsRadioGroup
-          hint="Choose how to return to settings"
+          hint={t('settings.security.hReturnSettings')}
           options={[
             {
               value: 'tap_anywhere',
-              label: 'Tap Anywhere',
+              label: t('settings.security.lTapAnywhere'),
               icon: 'gesture-tap',
-              hint: 'Tap N times in the same area (taps must be grouped)',
+              hint: t('settings.security.hTapGrouped'),
             },
             {
               value: 'button',
-              label: 'Fixed Button',
+              label: t('settings.security.lFixedButton'),
               icon: 'square-outline',
-              hint: 'Tap N times on a corner button',
+              hint: t('settings.security.hTapCorner'),
             },
           ]}
           value={returnMode}
@@ -351,7 +353,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         <View style={styles.divider} />
         
         <SettingsInput
-          label="Number of Taps (2-20)"
+          label={t('settings.security.lNumTaps')}
           hint={returnMode === 'button' ? 'Tap this many times to access settings' : 'Tap anywhere on screen this many times rapidly to access settings'}
           value={returnTapCount}
           onChangeText={(text) => {
@@ -365,8 +367,8 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         />
         
         <SettingsInput
-          label="Detection Timeout (500-5000 ms)"
-          hint="Time window to complete all taps. Higher values make detection easier but may trigger accidentally."
+          label={t('settings.security.lDetectTimeout')}
+          hint={t('settings.security.hDetectTimeout')}
           value={returnTapTimeout}
           onChangeText={(text) => {
             const filtered = text.replace(/[^0-9]/g, '');
@@ -384,12 +386,12 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
             {displayMode === 'external_app' && (
               <>
                 <SettingsRadioGroup
-                  hint="Button position on screen"
+                  hint={t('settings.security.hButtonPos')}
                   options={[
-                    { value: 'top-left', label: 'Top Left', icon: 'arrow-top-left' },
-                    { value: 'top-right', label: 'Top Right', icon: 'arrow-top-right' },
-                    { value: 'bottom-left', label: 'Bottom Left', icon: 'arrow-bottom-left' },
-                    { value: 'bottom-right', label: 'Bottom Right', icon: 'arrow-bottom-right' },
+                    { value: 'top-left', label: t('settings.security.lTopLeft'), icon: 'arrow-top-left' },
+                    { value: 'top-right', label: t('settings.security.lTopRight'), icon: 'arrow-top-right' },
+                    { value: 'bottom-left', label: t('settings.security.lBottomLeft'), icon: 'arrow-bottom-left' },
+                    { value: 'bottom-right', label: t('settings.security.lBottomRight'), icon: 'arrow-bottom-right' },
                   ]}
                   value={returnButtonPosition}
                   onValueChange={onReturnButtonPositionChange}
@@ -398,7 +400,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
               </>
             )}
             <SettingsSwitch
-              label="👁️ Show Button"
+              label={t('settings.security.lShowButton')}
               hint={displayMode === 'external_app' 
                 ? "Make the return button visible. When hidden, it's still active but invisible." 
                 : "Show a visual button indicator"}
@@ -411,7 +413,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         <>
           <View style={styles.divider} />
           <SettingsSwitch
-            label="🔊 Volume Button Alternative"
+            label={t('settings.security.lVolumeAlt')}
             hint={displayMode === 'external_app'
               ? 'Allow pressing Volume Up/Down multiple times to access settings (disabled by default in App mode to avoid accidental triggers during normal volume adjustment)'
               : 'Also allow pressing Volume Up/Down button multiple times to access settings'}
@@ -431,7 +433,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       </SettingsSection>
       
       {/* Touch Blocking Overlays - Works without Device Owner but less secure */}
-      <SettingsSection title="Touch Blocking" icon="gesture-tap-button">
+      <SettingsSection title={t('settings.security.tTouchBlocking')} icon="gesture-tap-button">
         <SettingsInfoBox variant="info">
           <Text style={styles.infoText}>
             ℹ️ Block touch input on specific screen areas (e.g., navigation bars, toolbars) to prevent users from interacting with certain parts of {displayMode === 'webview' ? 'the website' : 'external apps'}.
@@ -447,7 +449,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         )}
         
         <SettingsButton
-          title="Configure Blocking Overlays"
+          title={t('settings.security.tConfigOverlays')}
           icon="rectangle-outline"
           variant="primary"
           onPress={() => navigation?.navigate('BlockingOverlays')}
@@ -464,10 +466,10 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       
       {/* URL Filtering - Blacklist/Whitelist (WebView mode only) */}
       {displayMode === 'webview' && (
-        <SettingsSection title="URL Filtering" icon="shield-lock">
+        <SettingsSection title={t('settings.security.tUrlFiltering')} icon="shield-lock">
           <SettingsSwitch
-            label="Enable URL Filtering"
-            hint="Control which URLs can be accessed in the kiosk browser"
+            label={t('settings.security.lEnableFilter')}
+            hint={t('settings.security.hUrlFilter')}
             value={urlFilterEnabled}
             onValueChange={onUrlFilterEnabledChange}
           />
@@ -477,16 +479,16 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
               <View style={styles.divider} />
               
               <SettingsModeSelector
-                label="Filter Mode"
+                label={t('settings.security.lFilterMode')}
                 options={[
                   {
                     value: 'blacklist',
-                    label: 'Blacklist',
+                    label: t('settings.security.lBlacklist'),
                     icon: 'close-circle',
                   },
                   {
                     value: 'whitelist',
-                    label: 'Whitelist',
+                    label: t('settings.security.lWhitelist'),
                     icon: 'check-circle-outline',
                   },
                 ]}
@@ -530,8 +532,8 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
               <View style={styles.divider} />
               
               <SettingsSwitch
-                label="Show Blocked Notification"
-                hint="Briefly display a toast message when a URL is blocked"
+                label={t('settings.security.lShowBlocked')}
+                hint={t('settings.security.hShowBlocked')}
                 value={urlFilterShowFeedback}
                 onValueChange={onUrlFilterShowFeedbackChange}
               />
@@ -544,37 +546,37 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       {displayMode === 'external_app' && (
         <>
           {/* Auto Relaunch */}
-          <SettingsSection title="External App Behavior" icon="application">
+          <SettingsSection title={t('settings.security.tExtAppBehavior')} icon="application">
             <SettingsSwitch
-              label="🔄 Auto-Relaunch App"
-              hint="Automatically relaunch the app if it closes or crashes"
+              label={t('settings.security.lAutoRelaunch')}
+              hint={t('settings.security.hAutoRelaunch')}
               value={autoRelaunchApp}
               onValueChange={onAutoRelaunchAppChange}
             />
           </SettingsSection>
           
           {/* Back Button Behavior */}
-          <SettingsSection title="Back Button Behavior" icon="undo">
+          <SettingsSection title={t('settings.security.tBackBehavior')} icon="undo">
             <SettingsRadioGroup
-              hint="Action when the Android Back button is pressed"
+              hint={t('settings.security.hBackAction')}
               options={[
                 {
                   value: 'test',
-                  label: 'Test Mode',
+                  label: t('settings.security.lTestMode'),
                   icon: 'test-tube',
-                  hint: 'Back button works normally (for testing)',
+                  hint: t('settings.security.hBackTest'),
                 },
                 {
                   value: 'immediate',
-                  label: 'Immediate Return',
+                  label: t('settings.security.lImmediate'),
                   icon: 'flash',
-                  hint: 'Relaunch app instantly',
+                  hint: t('settings.security.hRelaunchNow'),
                 },
                 {
                   value: 'timer',
-                  label: 'Delayed Return',
+                  label: t('settings.security.lDelayed'),
                   icon: 'timer',
-                  hint: 'Wait X seconds then relaunch app automatically',
+                  hint: t('settings.security.hRelaunchDelay'),
                 },
               ]}
               value={backButtonMode}
@@ -584,7 +586,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
             {backButtonMode === 'timer' && (
               <View style={styles.timerInput}>
                 <SettingsInput
-                  label="Delay (1-3600 seconds)"
+                  label={t('settings.security.lDelaySeconds')}
                   value={backButtonTimerDelay}
                   onChangeText={(text) => {
                     const num = text.replace(/[^0-9]/g, '');
@@ -601,10 +603,10 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
       )}
       
       {/* Lock Screen Controls */}
-      <SettingsSection title="Lock Screen Controls" icon="lock">
+      <SettingsSection title={t('settings.security.tLockControls')} icon="lock">
         <SettingsSwitch
-          label="Enable Lock Screen Controls"
-          hint="Show selected quick controls on the PIN entry screen without giving access to Settings or other apps."
+          label={t('settings.security.lEnableLockControls')}
+          hint={t('settings.security.hLockControls')}
           value={lockscreenControlsEnabled}
           onValueChange={onLockscreenControlsEnabledChange}
         />
@@ -617,49 +619,49 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
             </SettingsInfoBox>
             <View style={styles.divider} />
             <SettingsSwitch
-              label="📶 WiFi control on lock screen"
-              hint="Show a WiFi button on the PIN entry screen. Users can turn WiFi on/off and connect to networks without unlocking."
+              label={t('settings.security.lWifiControl')}
+              hint={t('settings.security.hWifiControl')}
               value={lockscreenWifiEnabled}
               onValueChange={onLockscreenWifiEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔵 Bluetooth control on lock screen"
-              hint="Show a Bluetooth button on the PIN entry screen. Users can toggle Bluetooth and pair devices without unlocking."
+              label={t('settings.security.lBtControl')}
+              hint={t('settings.security.hBtControl')}
               value={lockscreenBluetoothEnabled}
               onValueChange={onLockscreenBluetoothEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🆘 Emergency call button"
-              hint="Show an emergency call button on the PIN entry screen. Opens the phone emergency dialer."
+              label={t('settings.security.lEmergency')}
+              hint={t('settings.security.hEmergency')}
               value={lockscreenEmergencyCallEnabled}
               onValueChange={onLockscreenEmergencyCallEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔊 Audio controls on lock screen"
-              hint="Show mute and audio output controls on the PIN entry screen."
+              label={t('settings.security.lAudioControl')}
+              hint={t('settings.security.hAudioControl')}
               value={lockscreenAudioEnabled}
               onValueChange={onLockscreenAudioEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔦 Flashlight button on lock screen"
-              hint="Show a flashlight toggle on the PIN entry screen."
+              label={t('settings.security.lFlashlight')}
+              hint={t('settings.security.hFlashlight')}
               value={lockscreenFlashlightEnabled}
               onValueChange={onLockscreenFlashlightEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="☀️ Brightness control on lock screen"
-              hint="Show a brightness button on the PIN entry screen. Opens a slider."
+              label={t('settings.security.lBrightnessLock')}
+              hint={t('settings.security.hBrightnessLock')}
               value={lockscreenBrightnessEnabled}
               onValueChange={onLockscreenBrightnessEnabledChange}
             />
             <View style={styles.divider} />
             <SettingsSwitch
-              label="🔄 Rotation lock on lock screen"
+              label={t('settings.security.lRotationLock')}
               hint={
                 lockscreenRotationLockAvailable
                   ? 'Show a rotation lock toggle on the PIN entry screen.'

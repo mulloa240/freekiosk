@@ -5,6 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, NativeModules } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   SettingsSection,
   SettingsButton,
@@ -72,6 +73,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
   kioskEnabled,
   onRestoreComplete,
 }) => {
+  const { t } = useTranslation();
   const [accessibilityEnabled, setAccessibilityEnabled] = useState(false);
   const [accessibilityRunning, setAccessibilityRunning] = useState(false);
 
@@ -103,7 +105,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
       // (temporarily exits lock task before launching the settings intent)
       await KioskModule.openAndroidSettings('accessibility');
     } catch (e: any) {
-      Alert.alert('Error', 'Could not open Accessibility Settings');
+      Alert.alert(t('common.error'), t('settings.advanced.aCouldNotOpenA11y'));
     }
   };
 
@@ -112,18 +114,16 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
       await AccessibilityModule.enableViaDeviceOwner();
       // Re-check status after enabling
       setTimeout(checkAccessibilityStatus, 1000);
-      Alert.alert('Success', 'Accessibility Service has been enabled automatically via Device Owner.');
+      Alert.alert(t('settings.advanced.aSuccess'), t('settings.advanced.aA11yEnabled'));
     } catch (e: any) {
       if (e.code === 'WRITE_SECURE_SETTINGS_REQUIRED') {
         Alert.alert(
-          'Permission Required',
-          'To auto-enable the Accessibility Service, the WRITE_SECURE_SETTINGS permission must be granted via ADB (one-time setup):\n\n' +
-          'adb shell pm grant com.freekiosk android.permission.WRITE_SECURE_SETTINGS\n\n' +
-          'Alternatively, tap "Open Accessibility Settings" below to enable it manually.',
-          [{ text: 'OK' }],
+          t('settings.advanced.aPermissionRequired'),
+          t('settings.advanced.aWriteSecureSettings'),
+          [{ text: t('common.ok') }],
         );
       } else {
-        Alert.alert('Error', e.message || 'Failed to enable via Device Owner');
+        Alert.alert(t('common.error'), e.message || t('settings.advanced.aFailedEnable'));
       }
     }
   };
@@ -131,25 +131,25 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
     <View>
       {/* App Updates - Hidden in Play Store builds (compliance: no in-app updates) */}
       {enableSelfUpdate && (
-      <SettingsSection title="Updates" icon="update">
+      <SettingsSection title={t('settings.advanced.tUpdates')} icon="update">
         <View style={styles.versionRow}>
-          <Text style={styles.versionLabel}>Current Version</Text>
+          <Text style={styles.versionLabel}>{t('settings.advanced.lCurrentVersion')}</Text>
           <Text style={styles.versionValue}>{currentVersion}</Text>
         </View>
-        
+
         {updateAvailable && updateInfo && (
-          <SettingsInfoBox variant="success" title={`🎉 ${updateInfo.isPrerelease ? '🧪 Beta ' : ''}Update Available`}>
+          <SettingsInfoBox variant="success" title={`🎉 ${updateInfo.isPrerelease ? t('settings.advanced.lBetaPrefix') : ''}${t('settings.advanced.lUpdateAvailable')}`}>
             <Text style={styles.infoText}>
-              Version {updateInfo.version} is available!{updateInfo.isPrerelease ? ' (pre-release)' : ''}
+              {t('settings.advanced.iVersionAvailable', { version: updateInfo.version })}{updateInfo.isPrerelease ? t('settings.advanced.iPrerelease') : ''}
               {updateInfo.notes && `\n\n${updateInfo.notes.substring(0, 150)}...`}
             </Text>
           </SettingsInfoBox>
         )}
-        
+
         <View style={styles.betaRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.betaLabel}>🧪 Beta Updates</Text>
-            <Text style={styles.betaHint}>Receive pre-release versions before stable</Text>
+            <Text style={styles.betaLabel}>{t('settings.advanced.lBetaUpdates')}</Text>
+            <Text style={styles.betaHint}>{t('settings.advanced.hBetaUpdates')}</Text>
           </View>
           <TouchableOpacity
             style={[styles.betaToggle, betaUpdatesEnabled && styles.betaToggleActive]}
@@ -162,7 +162,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
         </View>
         
         <SettingsButton
-          title={checkingUpdate ? 'Checking...' : downloading ? 'Downloading...' : 'Check for Updates'}
+          title={checkingUpdate ? t('settings.advanced.bChecking') : downloading ? t('settings.advanced.bDownloading') : t('settings.advanced.bCheckUpdates')}
           icon={checkingUpdate ? 'timer-sand' : downloading ? 'download' : 'magnify'}
           variant="primary"
           onPress={onCheckForUpdates}
@@ -172,7 +172,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
         
         {updateAvailable && updateInfo && (
           <SettingsButton
-            title={downloading ? 'Downloading...' : 'Download & Install'}
+            title={downloading ? t('settings.advanced.bDownloading') : t('settings.advanced.bDownloadInstall')}
             icon="download"
             variant="success"
             onPress={onDownloadUpdate}
@@ -182,21 +182,21 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
         )}
         
         <Text style={styles.hint}>
-          {isDeviceOwner ? 'Device Owner mode: Manual updates via GitHub.' : 'Download and install updates from GitHub.'}
+          {isDeviceOwner ? t('settings.advanced.hUpdateDeviceOwner') : t('settings.advanced.hUpdateNormal')}
         </Text>
       </SettingsSection>
       )}
       
       {/* SSL Certificates - WebView only */}
       {displayMode === 'webview' && (
-        <SettingsSection title="Accepted SSL Certificates" icon="certificate-outline">
+        <SettingsSection title={t('settings.advanced.tSslCerts')} icon="certificate-outline">
           <Text style={styles.hint}>
-            Self-signed certificates you've accepted. They expire after 1 year.
+            {t('settings.advanced.hSslCerts')}
           </Text>
-          
+
           {certificates.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No certificates accepted</Text>
+              <Text style={styles.emptyStateText}>{t('settings.advanced.lNoCerts')}</Text>
             </View>
           ) : (
             <View style={styles.certificatesList}>
@@ -210,7 +210,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
                       {cert.fingerprint.substring(0, 24)}...
                     </Text>
                     <Text style={[styles.certificateExpiry, cert.isExpired && styles.certificateExpired]}>
-                      {cert.isExpired ? '⚠️ Expired: ' : 'Expires: '}
+                      {cert.isExpired ? t('settings.advanced.lExpired') : t('settings.advanced.lExpires')}
                       {cert.expiryDate}
                     </Text>
                   </View>
@@ -235,9 +235,9 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
 
       {/* Accessibility Service - Hidden in Play Store builds (BIND_ACCESSIBILITY_SERVICE policy) */}
       {enableSelfUpdate && (
-      <SettingsSection title="Accessibility Service" icon="keyboard-outline">
+      <SettingsSection title={t('settings.advanced.tAccessibility')} icon="keyboard-outline">
         <View style={styles.accessibilityStatusRow}>
-          <Text style={styles.accessibilityStatusLabel}>Status</Text>
+          <Text style={styles.accessibilityStatusLabel}>{t('settings.advanced.lStatus')}</Text>
           <View style={[
             styles.accessibilityStatusBadge,
             { backgroundColor: accessibilityRunning ? Colors.successLight : accessibilityEnabled ? Colors.warningLight : Colors.errorLight },
@@ -246,15 +246,14 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
               styles.accessibilityStatusText,
               { color: accessibilityRunning ? Colors.successDark : accessibilityEnabled ? Colors.warningDark : Colors.errorDark },
             ]}>
-              {accessibilityRunning ? '● Active' : accessibilityEnabled ? '● Enabled (not connected)' : '○ Disabled'}
+              {accessibilityRunning ? t('settings.advanced.sActive') : accessibilityEnabled ? t('settings.advanced.sEnabledNotConnected') : t('settings.advanced.sDisabled')}
             </Text>
           </View>
         </View>
 
-        <SettingsInfoBox variant="info" title="ℹ️ Why is this needed?">
+        <SettingsInfoBox variant="info" title={t('settings.advanced.tWhyNeeded')}>
           <Text style={styles.infoText}>
-            The Accessibility Service allows FreeKiosk to send keyboard input (remote control, text input) to external apps.{'\n\n'}
-            Without it, keyboard emulation only works inside FreeKiosk's own WebView.
+            {t('settings.advanced.iAccessibilityWhy')}
           </Text>
         </SettingsInfoBox>
 
@@ -262,37 +261,36 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
           <>
             {isDeviceOwner ? (
               <SettingsButton
-                title="Enable Automatically (Device Owner)"
+                title={t('settings.advanced.bEnableAuto')}
                 icon="shield-check"
                 variant="primary"
                 onPress={handleEnableViaDeviceOwner}
               />
             ) : null}
             <SettingsButton
-              title="Open Accessibility Settings"
+              title={t('settings.advanced.bOpenAccessibility')}
               icon="open-in-new"
               variant="primary"
               onPress={handleOpenAccessibilitySettings}
             />
             <Text style={styles.hint}>
               {isDeviceOwner
-                ? 'Device Owner mode can enable the service automatically if the WRITE_SECURE_SETTINGS permission has been granted via ADB. Otherwise, enable it manually in Android settings.'
-                : 'Enable "FreeKiosk" in Settings → Accessibility → Installed Services.'}
+                ? t('settings.advanced.hAccessibilityDeviceOwner')
+                : t('settings.advanced.hAccessibilityManual')}
             </Text>
           </>
         )}
 
         {accessibilityRunning && (
           <Text style={styles.hint}>
-            ✅ Keyboard emulation is available for all apps (WebView + External Apps).
+            {t('settings.advanced.hAccessibilityActive')}
           </Text>
         )}
 
         {isDeviceOwner && displayMode === 'external_app' && (
-          <SettingsInfoBox variant="info" title="🔧 Managed Apps Accessibility">
+          <SettingsInfoBox variant="info" title={t('settings.advanced.tManagedAppsA11y')}>
             <Text style={styles.infoText}>
-              You can allow other apps' accessibility services in the "Managed Apps" section of the General tab.{'\n'}
-              Toggle "Allow Accessibility" per app to whitelist their accessibility services via Device Owner.
+              {t('settings.advanced.iManagedAppsA11y')}
             </Text>
           </SettingsInfoBox>
         )}
@@ -303,21 +301,19 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
       <BackupRestoreSection onRestoreComplete={onRestoreComplete} />
 
       {/* Android System Settings */}
-      <SettingsSection title="Android System Settings" icon="android">
+      <SettingsSection title={t('settings.advanced.tAndroidSettings')} icon="android">
         <Text style={styles.hint}>
-          Open native Android settings to change WiFi, volume, display and more.
-          Useful when your device has no physical navigation buttons.
+          {t('settings.advanced.hAndroidSettings')}
         </Text>
         {kioskEnabled && (
-          <SettingsInfoBox variant="info" title="🔒 Kiosk Mode Active">
+          <SettingsInfoBox variant="info" title={t('settings.advanced.tKioskActive')}>
             <Text style={styles.infoText}>
-              Kiosk mode will be temporarily paused to open Android settings.{' '}
-              It will automatically re-engage when you return to FreeKiosk.
+              {t('settings.advanced.iKioskPaused')}
             </Text>
           </SettingsInfoBox>
         )}
         <SettingsButton
-          title="Open Android Settings"
+          title={t('settings.advanced.bOpenAndroidSettings')}
           icon="cog"
           variant="primary"
           onPress={() => KioskModule.openAndroidSettings(null)}
@@ -333,13 +329,13 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
             style={styles.shortcutButton}
             onPress={() => KioskModule.openAndroidSettings('sound')}
           >
-            <Text style={styles.shortcutText}>🔊 Sound</Text>
+            <Text style={styles.shortcutText}>{t('settings.advanced.scSound')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shortcutButton}
             onPress={() => KioskModule.openAndroidSettings('display')}
           >
-            <Text style={styles.shortcutText}>🔆 Display</Text>
+            <Text style={styles.shortcutText}>{t('settings.advanced.scDisplay')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shortcutButton}
@@ -351,38 +347,38 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
             style={styles.shortcutButton}
             onPress={() => KioskModule.openAndroidSettings('date')}
           >
-            <Text style={styles.shortcutText}>📅 Date & Time</Text>
+            <Text style={styles.shortcutText}>{t('settings.advanced.scDate')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shortcutButton}
             onPress={() => KioskModule.openAndroidSettings('apps')}
           >
-            <Text style={styles.shortcutText}>📱 Apps</Text>
+            <Text style={styles.shortcutText}>{t('settings.advanced.scApps')}</Text>
           </TouchableOpacity>
         </View>
       </SettingsSection>
 
       {/* Actions */}
-      <SettingsSection title="Actions" icon="cog-outline">
+      <SettingsSection title={t('settings.advanced.tActions')} icon="cog-outline">
         <SettingsButton
-          title="Reset All Settings"
+          title={t('settings.advanced.bResetAll')}
           icon="restart"
           variant="warning"
           onPress={onResetSettings}
         />
-        
+
         {isDeviceOwner && (
           <SettingsButton
-            title="Remove Device Owner"
+            title={t('settings.advanced.bRemoveDeviceOwner')}
             icon="alert"
             variant="danger"
             onPress={onRemoveDeviceOwner}
           />
         )}
-        
+
         {kioskEnabled && (
           <SettingsButton
-            title="Exit Kiosk Mode"
+            title={t('settings.advanced.bExitKiosk')}
             icon="exit-to-app"
             variant="danger"
             onPress={onExitKioskMode}

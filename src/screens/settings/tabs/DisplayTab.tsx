@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import {
   SettingsSection,
@@ -216,6 +217,7 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
   onAddScheduleRule,
   onEditScheduleRule,
 }) => {
+  const { t } = useTranslation();
   const handleCameraPositionChange = (value: string) => {
     if (value === 'front' || value === 'back') {
       onMotionCameraPositionChange(value);
@@ -242,9 +244,9 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
     <View>
       {/* App Brightness Control toggle - WebView mode only (external app mode doesn't manage brightness) */}
       {displayMode !== 'external_app' && (
-        <SettingsSection title="Brightness Control" icon="brightness-6">
+        <SettingsSection title={t('settings.display.tBrightness')} icon="brightness-6">
           <SettingsSwitch
-            label="App Brightness Control"
+            label={t('settings.display.lBrightnessControl')}
             hint={brightnessManagementEnabled
               ? "FreeKiosk manages screen brightness"
               : "System manages brightness (Tasker, Android settings, etc.)"}
@@ -263,7 +265,7 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
 
       {/* Default Brightness - Only in WebView mode and when app manages brightness */}
       {displayMode !== 'external_app' && brightnessManagementEnabled && (
-        <SettingsSection title="Manual Brightness" icon="brightness-6">
+        <SettingsSection title={t('settings.display.tManualBright')} icon="brightness-6">
           <SettingsSlider
             label=""
             hint={autoBrightnessEnabled 
@@ -288,10 +290,10 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Auto-Brightness - WebView only, and only when app manages brightness */}
       {displayMode !== 'external_app' && brightnessManagementEnabled && (
-        <SettingsSection title="Auto-Brightness" icon="brightness-auto">
+        <SettingsSection title={t('settings.display.tAutoBright')} icon="brightness-auto">
           <SettingsSwitch
-            label="Enable Auto-Brightness"
-            hint="Automatically adjust screen brightness based on ambient light"
+            label={t('settings.display.lEnableAuto')}
+            hint={t('settings.display.hAutoBright')}
             value={autoBrightnessEnabled}
             onValueChange={onAutoBrightnessEnabledChange}
             disabled={!hasLightSensor}
@@ -308,8 +310,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
           {hasLightSensor && autoBrightnessEnabled && (
             <>
               <SettingsSlider
-                label="Minimum Brightness"
-                hint="Lowest brightness in dark conditions"
+                label={t('settings.display.lMinBright')}
+                hint={t('settings.display.hMinBright')}
                 value={autoBrightnessMin}
                 onValueChange={onAutoBrightnessMinChange}
                 minimumValue={0}
@@ -323,8 +325,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
               />
               
               <SettingsSlider
-                label="Maximum Brightness"
-                hint="Highest brightness in bright conditions"
+                label={t('settings.display.lMaxBright')}
+                hint={t('settings.display.hMaxBright')}
                 value={autoBrightnessMax}
                 onValueChange={onAutoBrightnessMaxChange}
                 minimumValue={0}
@@ -338,8 +340,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
               />
               
               <SettingsSlider
-                label="Brightness Offset"
-                hint="Added to calculated auto-brightness (e.g. +10% makes it always a bit brighter)"
+                label={t('settings.display.lBrightOffset')}
+                hint={t('settings.display.hOffset')}
                 value={autoBrightnessOffset}
                 onValueChange={onAutoBrightnessOffsetChange}
                 minimumValue={0}
@@ -364,9 +366,9 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Screen Always On - WebView mode only (external app mode: system manages screen) */}
       {displayMode !== 'external_app' && (
-      <SettingsSection title="Screen Always On" icon="monitor">
+      <SettingsSection title={t('settings.display.tAlwaysOn')} icon="monitor">
         <SettingsSwitch
-          label="Keep Screen On"
+          label={t('settings.display.lKeepOn')}
           hint={keepScreenOn
             ? "Screen stays on permanently (standard kiosk behavior)"
             : "System manages screen timeout — display turns off after inactivity like a normal device"}
@@ -383,7 +385,7 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
           </SettingsInfoBox>
         )}
         <SettingsSwitch
-          label="Auto Wake on Screen Off"
+          label={t('settings.display.lAutoWake')}
           hint={autoWakeOnScreenOff
             ? "Screen will automatically turn back on when turned off (e.g. by power button)"
             : "Screen stays off when turned off by power button or system"}
@@ -393,7 +395,7 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
         {autoWakeOnScreenOff && (
           <SettingsInfoBox variant="info">
             <Text style={styles.infoText}>
-              When the screen is turned off (e.g. by a short power button press), it will automatically turn back on after a brief flicker. Useful for kiosk devices where the power button cannot be physically blocked.
+              {t('settings.display.iAutoWake')}
             </Text>
           </SettingsInfoBox>
         )}
@@ -402,10 +404,10 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Screensaver - available in all display modes (keepScreenOn required for webview/media_player) */}
       {(displayMode === 'external_app' || keepScreenOn) && (
-        <SettingsSection title="Screensaver" icon="weather-night">
+        <SettingsSection title={t('settings.display.tScreensaver')} icon="weather-night">
           <SettingsSwitch
-            label="Enable Screensaver"
-            hint="Activate screensaver after a period of inactivity"
+            label={t('settings.display.lEnableSaver')}
+            hint={t('settings.display.hEnableSaver')}
             value={screensaverEnabled}
             onValueChange={onScreensaverEnabledChange}
           />
@@ -423,14 +425,14 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
 
           {screensaverEnabled && (
             <>
-              {/* Screensaver Style (dim / url / video) */}
+              {/* {t('settings.display.iSaverStyle')} (dim / url / video) */}
               <View style={styles.subSection}>
-                <Text style={styles.subSectionTitle}>Screensaver Style</Text>
+                <Text style={styles.subSectionTitle}>{t('settings.display.iSaverStyle')}</Text>
                 <SettingsRadioGroup
                   options={[
-                    { label: 'Dim Only (default)', value: 'dim', hint: 'Just dim the brightness (current behavior)' },
-                    { label: 'Web Page', value: 'url', hint: 'Show a web page (clock, dashboard, HTML)' },
-                    { label: 'Video / Image', value: 'video', hint: 'Play a video or image slideshow' },
+                    { label: t('settings.display.lDimOnly'), value: 'dim', hint: t('settings.display.hDimBehavior') },
+                    { label: t('settings.display.lWebPage'), value: 'url', hint: t('settings.display.hShowWebPage') },
+                    { label: t('settings.display.lVideoImage'), value: 'video', hint: t('settings.display.hSlideshow') },
                   ]}
                   value={screensaverType}
                   onValueChange={(v) => onScreensaverTypeChange(v as 'dim' | 'url' | 'video')}
@@ -439,13 +441,13 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                 {screensaverType === 'url' && (
                   <>
                     <SettingsInput
-                      label="Screensaver URL"
+                      label={t('settings.display.lSaverUrl')}
                       value={screensaverUrl}
                       onChangeText={onScreensaverUrlChange}
-                      placeholder="https://example.com/clock"
+                      placeholder={t('settings.display.phClock')}
                       keyboardType="url"
                       autoCapitalize="none"
-                      hint="The page is shown read-only; tap anywhere to wake"
+                      hint={t('settings.display.hReadOnly')}
                     />
                     {screensaverUrl.trim().length > 0 && (() => {
                       try { new URL(screensaverUrl.trim()); return null; } catch {
@@ -496,8 +498,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                     ))}
 
                     <SettingsSwitch
-                      label="Loop playlist"
-                      hint="Restart from the beginning when the playlist ends"
+                      label={t('settings.display.lLoopPlaylist')}
+                      hint={t('settings.display.hLoopEnd')}
                       value={screensaverVideoLoop}
                       onValueChange={onScreensaverVideoLoopChange}
                     />
@@ -515,36 +517,36 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                 {(screensaverType === 'url' || screensaverType === 'video') && screensaverBrightness < 0.1 && brightnessManagementEnabled && (
                   <SettingsInfoBox variant="warning">
                     <Text style={styles.infoText}>
-                      ⚠️ Screensaver Brightness is below 10%. Raise it (see slider below) so the content is visible, or switch to Dim Only.
+                      ⚠️ {t('settings.display.iSaverBright')} is below 10%. Raise it (see slider below) so the content is visible, or switch to Dim Only.
                     </Text>
                   </SettingsInfoBox>
                 )}
               </View>
 
-              {/* Screensaver Brightness - only when app manages brightness */}
+              {/* {t('settings.display.iSaverBright')} - only when app manages brightness */}
               {brightnessManagementEnabled && (
                 <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>Screensaver Brightness</Text>
+                  <Text style={styles.subSectionTitle}>{t('settings.display.iSaverBright')}</Text>
                   <SettingsSlider
                     label=""
-                    hint="Screen brightness when screensaver is active"
+                    hint={t('settings.display.hSaverBright')}
                     value={screensaverBrightness}
                     onValueChange={onScreensaverBrightnessChange}
                     minimumValue={0}
                     maximumValue={1}
                     step={0.01}
                     presets={[
-                      { label: 'Black Screen', value: 0 },
-                      { label: 'Very Dim (5%)', value: 0.05 },
-                      { label: 'Dim (10%)', value: 0.1 },
+                      { label: t('settings.display.lBlackScreen'), value: 0 },
+                      { label: t('settings.display.lVeryDim'), value: 0.05 },
+                      { label: t('settings.display.lDim'), value: 0.1 },
                     ]}
                   />
                 </View>
               )}
               
-              {/* Inactivity Delay */}
+              {/* {t('settings.display.iInactDelay')} */}
               <View style={styles.subSection}>
-                <Text style={styles.subSectionTitle}>Inactivity Delay</Text>
+                <Text style={styles.subSectionTitle}>{t('settings.display.iInactDelay')}</Text>
                 <SettingsInput
                   label=""
                   value={inactivityDelay}
@@ -556,16 +558,16 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                   keyboardType="numeric"
                   maxLength={3}
                   placeholder="10"
-                  hint="Time in minutes before screensaver activates"
+                  hint={t('settings.display.hSaverDelay')}
                 />
               </View>
               
-              {/* Motion Detection */}
+              {/* {t('settings.display.iMotion')} */}
               <View style={styles.subSection}>
-                <Text style={styles.subSectionTitle}>Motion Detection</Text>
+                <Text style={styles.subSectionTitle}>{t('settings.display.iMotion')}</Text>
                 <SettingsSwitch
-                  label="Enable Detection"
-                  hint="Wake screen when motion is detected by the camera"
+                  label={t('settings.display.lEnableDetection')}
+                  hint={t('settings.display.hMotionWake')}
                   value={motionEnabled}
                   onValueChange={onMotionEnabledChange}
                 />
@@ -573,12 +575,12 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                 {motionEnabled && (
                   <>
                     <SettingsRadioGroup
-                      label="Sensitivity"
-                      hint="Higher sensitivity triggers on smaller movements"
+                      label={t('settings.display.lSensitivity')}
+                      hint={t('settings.display.hSensitivity')}
                       options={[
-                        { label: 'Low', value: 'low' },
-                        { label: 'Medium', value: 'medium' },
-                        { label: 'High', value: 'high' },
+                        { label: t('settings.display.lLow'), value: 'low' },
+                        { label: t('settings.display.lMedium'), value: 'medium' },
+                        { label: t('settings.display.lHigh'), value: 'high' },
                       ]}
                       value={motionSensitivity}
                       onValueChange={handleMotionSensitivityChange}
@@ -603,8 +605,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
                     {availableCameras.length > 1 && (
                       <>
                         <SettingsRadioGroup
-                          label="Camera Position"
-                          hint="Select which camera to use for motion detection"
+                          label={t('settings.display.lCameraPos')}
+                          hint={t('settings.display.hSelectCamera')}
                           options={cameraOptions}
                           value={motionCameraPosition}
                           onValueChange={handleCameraPositionChange}
@@ -647,23 +649,23 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       )}
       
       {/* Screen Sleep Scheduler */}
-      <SettingsSection title="Screen Sleep Schedule" icon="power-sleep">
+      <SettingsSection title={t('settings.display.tSleepSchedule')} icon="power-sleep">
         <SettingsSwitch
-          label="Enable Screen Schedule"
-          hint="Automatically turn screen off/on at scheduled times to save energy"
+          label={t('settings.display.lEnableSchedule')}
+          hint={t('settings.display.hSchedule')}
           value={screenSchedulerEnabled}
           onValueChange={onScreenSchedulerEnabledChange}
         />
         
         {screenSchedulerEnabled && (
           <>
-            {/* Schedule Rules List */}
+            {/* {t('settings.display.iScheduleRules')} List */}
             <View style={styles.subSection}>
-              <Text style={styles.subSectionTitle}>Schedule Rules</Text>
+              <Text style={styles.subSectionTitle}>{t('settings.display.iScheduleRules')}</Text>
               {screenSchedulerRules.length === 0 ? (
                 <SettingsInfoBox variant="info">
                   <Text style={styles.infoText}>
-                    No rules configured yet. Add a rule to define when the screen should turn off.
+                    {t('settings.display.iNoRules')}
                   </Text>
                 </SettingsInfoBox>
               ) : (
@@ -710,10 +712,10 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
             
             {/* Wake on Touch option */}
             <View style={styles.subSection}>
-              <Text style={styles.subSectionTitle}>Wake Options</Text>
+              <Text style={styles.subSectionTitle}>{t('settings.display.iWakeOptions')}</Text>
               <SettingsSwitch
-                label="Wake on Touch"
-                hint="Allow the screen to wake up temporarily when touched during a scheduled sleep period"
+                label={t('settings.display.lWakeOnTouch')}
+                hint={t('settings.display.hWakeTouch')}
                 value={screenSchedulerWakeOnTouch}
                 onValueChange={onScreenSchedulerWakeOnTouchChange}
               />
@@ -749,10 +751,10 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       </SettingsSection>
       
       {/* Status Bar */}
-      <SettingsSection title="System Status Bar" icon="chart-bar">
+      <SettingsSection title={t('settings.display.tStatusBar')} icon="chart-bar">
         <SettingsSwitch
-          label="Show Status Bar"
-          hint="Display battery, Wi-Fi, Bluetooth, volume and time at the top of the screen"
+          label={t('settings.display.lShowStatusBar')}
+          hint={t('settings.display.hStatusBar')}
           value={statusBarEnabled}
           onValueChange={onStatusBarEnabledChange}
         />
@@ -761,24 +763,24 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
           <View style={styles.subSection}>
             <SettingsInfoBox variant="info">
               <Text style={styles.infoText}>
-                Layout: items are positioned left and right to avoid the center camera area
+                {t('settings.display.iLayout')}
               </Text>
             </SettingsInfoBox>
 
             <SettingsRadioGroup
-              label="Status Bar Theme"
-              hint="Choose a dark or light style for icons and text"
+              label={t('settings.display.lStatusTheme')}
+              hint={t('settings.display.hStatusTheme')}
               options={[
                 {
                   value: 'dark',
-                  label: 'Dark',
-                  hint: 'Dark background with light icons/text',
+                  label: t('settings.display.lDark'),
+                  hint: t('settings.display.hDarkBg'),
                   icon: 'weather-night',
                 },
                 {
                   value: 'light',
-                  label: 'Light',
-                  hint: 'Light background with dark icons/text',
+                  label: t('settings.display.lLight'),
+                  hint: t('settings.display.hLightBg'),
                   icon: 'brightness-7',
                 },
               ]}
@@ -787,11 +789,11 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
             />
             
             {/* Customize Status Bar Items */}
-            <Text style={styles.subSectionTitle}>Customize Items</Text>
+            <Text style={styles.subSectionTitle}>{t('settings.display.iCustomizeItems')}</Text>
             
             <View style={styles.itemsGrid}>
               <SettingsSwitch
-                label="Battery"
+                label={t('settings.display.lBattery')}
                 icon="power"
                 value={showBattery}
                 onValueChange={onShowBatteryChange}
@@ -812,14 +814,14 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
               />
               
               <SettingsSwitch
-                label="Volume"
+                label={t('settings.display.lVolume')}
                 icon="volume-high"
                 value={showVolume}
                 onValueChange={onShowVolumeChange}
               />
               
               <SettingsSwitch
-                label="Time"
+                label={t('settings.display.lTime')}
                 icon="clock-outline"
                 value={showTime}
                 onValueChange={onShowTimeChange}
@@ -829,18 +831,18 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
             {/* External App specific options */}
             {displayMode === 'external_app' && (
               <View style={styles.externalAppOptions}>
-                <Text style={styles.subSectionTitle}>External App Mode Options</Text>
+                <Text style={styles.subSectionTitle}>{t('settings.display.iExtAppOptions')}</Text>
                 
                 <SettingsSwitch
-                  label="On External App (Overlay)"
-                  hint="Show status bar overlay on top of the external app"
+                  label={t('settings.display.lOnExternalApp')}
+                  hint={t('settings.display.hStatusOverlay')}
                   value={statusBarOnOverlay}
                   onValueChange={onStatusBarOnOverlayChange}
                 />
                 
                 <SettingsSwitch
-                  label="On Return Screen"
-                  hint="Show status bar on the 'External App Running' screen"
+                  label={t('settings.display.lOnReturn')}
+                  hint={t('settings.display.hStatusReturn')}
                   value={statusBarOnReturn}
                   onValueChange={onStatusBarOnReturnChange}
                 />
@@ -860,19 +862,19 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Web Page Zoom - Only in WebView mode */}
       {displayMode === 'webview' && (
-        <SettingsSection title="Web Page Zoom" icon="magnify">
+        <SettingsSection title={t('settings.display.tZoom')} icon="magnify">
           <SettingsRadioGroup
-            hint="How the zoom level is applied to the page"
+            hint={t('settings.display.hZoomApply')}
             options={[
               {
                 value: 'standard',
-                label: 'Standard',
-                hint: 'Zooms the whole document (html). Recommended for most websites.',
+                label: t('settings.display.lStandard'),
+                hint: t('settings.display.hZoomDoc'),
               },
               {
                 value: 'fit',
                 label: 'Home Assistant',
-                hint: 'Zooms the page body instead, the same way HADashboard does — Home Assistant dashboards re-flow their cards and fill the screen.',
+                hint: t('settings.display.hZoomBody'),
               },
             ]}
             value={zoomMode}
@@ -909,8 +911,8 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
             </SettingsInfoBox>
           )}
           <SettingsSwitch
-            label="Disable User Zoom"
-            hint="Prevent pinch-to-zoom and double-tap zoom on the web page. The admin zoom level above still applies."
+            label={t('settings.display.lDisableZoom')}
+            hint={t('settings.display.hDisableZoom')}
             value={disableUserZoom}
             onValueChange={onDisableUserZoomChange}
           />
@@ -919,9 +921,9 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Custom User Agent - Only in WebView mode */}
       {displayMode === 'webview' && (
-        <SettingsSection title="User Agent" icon="web">
+        <SettingsSection title={t('settings.display.tUserAgent')} icon="web">
           <SettingsInput
-            label="Custom User Agent"
+            label={t('settings.display.lCustomUA')}
             hint={customUserAgent.trim() ? 'Custom UA active. Clear the field to use the default.' : 'Leave empty to use the default modern Chrome User Agent. Some hosting providers (e.g. SiteGround) block old or suspicious User Agents.'}
             value={customUserAgent}
             onChangeText={onCustomUserAgentChange}
@@ -941,16 +943,16 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
       
       {/* Web Media playback - Only in WebView mode (#177) */}
       {displayMode === 'webview' && (
-        <SettingsSection title="Web Media" icon="volume-off">
+        <SettingsSection title={t('settings.display.tWebMedia')} icon="volume-off">
           <SettingsSwitch
-            label="Pause audio/video when hidden"
-            hint="Pause web page audio and video when the screensaver is shown, the screen turns off, or the app goes to the background — otherwise a web radio or video could keep playing unreachable in the background. Turn off to keep web audio playing continuously."
+            label={t('settings.display.lPauseMedia')}
+            hint={t('settings.display.hPauseMedia')}
             value={pauseWebMediaWhenHidden}
             onValueChange={onPauseWebMediaWhenHiddenChange}
           />
           <SettingsSwitch
-            label="🎙️ 2-way audio (intercom) mode"
-            hint="Enable for WebRTC 2-way audio / talk-back (e.g. a Home Assistant / go2rtc doorbell intercom card). While the web page is actively using the microphone, FreeKiosk switches the device to communication audio mode so the microphone back-channel transmits, then restores normal audio when you stop talking. Leave off for normal browsing — it only engages while the mic is in use."
+            label={t('settings.display.l2wayAudio')}
+            hint={t('settings.display.h2way')}
             value={intercomModeEnabled}
             onValueChange={onIntercomModeChange}
           />
@@ -959,24 +961,24 @@ const DisplayTab: React.FC<DisplayTabProps> = ({
 
       {/* Keyboard Mode - Only in WebView mode */}
       {displayMode === 'webview' && (
-        <SettingsSection title="Keyboard Mode" icon="keyboard-outline">
+        <SettingsSection title={t('settings.display.tKeyboard')} icon="keyboard-outline">
           <SettingsRadioGroup
-            hint="Control which keyboard appears for input fields"
+            hint={t('settings.display.hKeyboard')}
             options={[
               {
                 value: 'default',
-                label: 'Default',
-                hint: 'Respect website settings (recommended)',
+                label: t('settings.display.lDefault'),
+                hint: t('settings.display.hRespectSite'),
               },
               {
                 value: 'force_numeric',
-                label: 'Force Numeric',
-                hint: 'All fields show numeric keyboard',
+                label: t('settings.display.lForceNumeric'),
+                hint: t('settings.display.hAllNumeric'),
               },
               {
                 value: 'smart',
-                label: 'Smart Detection',
-                hint: 'Detect and convert numeric fields only',
+                label: t('settings.display.lSmartDetect'),
+                hint: t('settings.display.hNumericOnly'),
               },
             ]}
             value={keyboardMode}

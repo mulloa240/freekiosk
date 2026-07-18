@@ -1,0 +1,81 @@
+# Publica una GitHub Release con el APK del fork Somelier Kiosk.
+#
+# Se dispara al pushear un tag de version (vX.Y.Z). Compila el APK release y lo
+# adjunta como asset de la Release, con el nombre FreeKiosk-v<version>.apk que
+# el UpdateModule de la app espera. Asi el auto-update de las tablets
+# (que consulta mulloa240/freekiosk/releases/latest) encuentra la version nueva
+# y la instala sola.
+#
+# Uso: subir un tag, p. ej.  git tag v1.2.21 && git push origin v1.2.21
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version a publicar (sin la v, ej. 1.2.21)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Resolver version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      # Igual que build-apk.yml: upstream ignora gradle.properties, se genera
+      # con memoria suficiente para el build de React Native.
+      - name: Generate gradle.properties
+        run: |
+          cat > android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          android.useAndroidX=true
+          reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64
+          EOF
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Renombrar APK con el nombre que espera el updater
+        run: |
+          mkdir -p release-out
+          cp android/app/build/outputs/apk/release/*.apk \
+             "release-out/FreeKiosk-v${{ steps.version.outputs.value }}.apk"
+
+      - name: Publicar GitHub Release con el APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          name: Somelier Kiosk v${{ steps.version.outputs.value }}
+          files: release-out/*.apk
+          generate_release_notes: true

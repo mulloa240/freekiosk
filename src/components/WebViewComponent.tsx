@@ -17,6 +17,7 @@ const { HttpServerModule } = NativeModules;
 
 import KioskModule from '../utils/KioskModule';
 import UpdateModule from '../utils/UpdateModule';
+import { StorageService } from '../utils/storage';
 import { WebView } from 'react-native-webview';
 import type { WebViewErrorEvent, ShouldStartLoadRequest, WebViewRenderProcessGoneEvent } from 'react-native-webview/lib/WebViewTypes';
 import { useNavigation } from '@react-navigation/native';
@@ -759,6 +760,23 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
           // User closed PDF viewer, go back to previous page
           if (webViewRef.current) {
             webViewRef.current.goBack();
+          }
+        } else if (data.type === 'SOMELIER_CONFIG' && data.config) {
+          // Fase 2 (plataforma Somelier): la config heredada llega al
+          // kiosk-client por WebSocket, que reenvia aca el subconjunto de
+          // ajustes NATIVOS para que el shell los persista en su almacenamiento
+          // (las mismas claves que escribe la pantalla de Ajustes). Asi la
+          // config se administra desde el portal sin tocar cada tablet.
+          const cfg = data.config;
+          if (typeof cfg.exitTapCount === 'number') {
+            StorageService.saveReturnTapCount(cfg.exitTapCount).catch((err: any) =>
+              console.warn('[WebView] no se pudo guardar exitTapCount:', err),
+            );
+          }
+          if (typeof cfg.exitDetectionTimeoutMs === 'number') {
+            StorageService.saveReturnTapTimeout(cfg.exitDetectionTimeoutMs).catch((err: any) =>
+              console.warn('[WebView] no se pudo guardar exitDetectionTimeoutMs:', err),
+            );
           }
         }
       } catch (e) {
