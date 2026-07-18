@@ -320,6 +320,31 @@
       "tExtAppBehavior": "External App Behavior",
       "tBackBehavior": "Back Button Behavior",
       "tLockControls": "Lock Screen Controls"
+    },
+    "dashboards": {
+      "lLabel": "Label",
+      "lImageUrl": "Image URL",
+      "lFavicon": "Favicon",
+      "lLetter": "Letter",
+      "phMyDashboard": "My Dashboard",
+      "phIconUrl": "https://example.com/icon.png",
+      "tTiles": "Dashboard Tiles",
+      "tAddTile": "Add Tile",
+      "tCancel": "Cancel",
+      "iEnableInGeneral": "Enable Dashboard mode in General tab to configure tiles.",
+      "iIconMode": "Icon Mode",
+      "iPreview": "Preview",
+      "aEnterLabel": "Please enter a label",
+      "aEnterUrl": "Please enter a URL",
+      "aSecErrorTitle": "Security Error",
+      "aUrlNotAllowed": "This type of URL is not allowed. Use http:// or https://",
+      "aInvalidUrlTitle": "Invalid URL",
+      "aEnterValidUrl": "Please enter a valid URL",
+      "aDeleteTitle": "Delete Tile",
+      "aDelete": "Delete",
+      "aRemoveConfirm": "Remove \"{{label}}\"?",
+      "tEditTile": "Edit Tile",
+      "tNewTile": "New Tile"
     }
   }
 }

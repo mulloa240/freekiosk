@@ -320,6 +320,31 @@
       "tExtAppBehavior": "Comportamiento de app externa",
       "tBackBehavior": "Comportamiento del botón atrás",
       "tLockControls": "Controles de pantalla de bloqueo"
+    },
+    "dashboards": {
+      "lLabel": "Etiqueta",
+      "lImageUrl": "URL de imagen",
+      "lFavicon": "Favicon",
+      "lLetter": "Letra",
+      "phMyDashboard": "Mi dashboard",
+      "phIconUrl": "https://ejemplo.com/icono.png",
+      "tTiles": "Tiles del dashboard",
+      "tAddTile": "Agregar tile",
+      "tCancel": "Cancelar",
+      "iEnableInGeneral": "Activá el modo dashboard en la pestaña General para configurar los tiles.",
+      "iIconMode": "Modo de ícono",
+      "iPreview": "Vista previa",
+      "aEnterLabel": "Ingresá una etiqueta",
+      "aEnterUrl": "Ingresá una URL",
+      "aSecErrorTitle": "Error de seguridad",
+      "aUrlNotAllowed": "Este tipo de URL no está permitido. Usá http:// o https://",
+      "aInvalidUrlTitle": "URL inválida",
+      "aEnterValidUrl": "Ingresá una URL válida",
+      "aDeleteTitle": "Eliminar tile",
+      "aDelete": "Eliminar",
+      "aRemoveConfirm": "¿Quitar \"{{label}}\"?",
+      "tEditTile": "Editar Mosaico",
+      "tNewTile": "Nuevo Mosaico"
     }
   }
 }
