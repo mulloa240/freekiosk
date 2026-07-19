@@ -28,6 +28,31 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Aplica el modo de bloqueo enviado desde el portal Somelier (config.update →
+// SOMELIER_CONFIG). Requiere que la app sea Device Owner: si no lo es, no hace
+// nada, para no bloquear un tablet sin provisionar (no se puede salir sin ADB).
+//   device_owner → activa el modo kiosko (lo persiste y engancha lock task).
+//   none         → desactiva el modo kiosko y libera el lock task.
+//   pin / otros  → no cambia el estado nativo (bloqueo por PIN es de la app).
+async function applyLockModeFromPortal(lockMode: string): Promise<void> {
+  try {
+    const isOwner = await KioskModule.isDeviceOwner();
+    if (!isOwner) return;
+
+    if (lockMode === 'device_owner') {
+      await StorageService.saveKioskEnabled(true);
+      // Defaults conservadores: permite el botón de encendido (para despertar la
+      // pantalla) y bloquea notificaciones / info del sistema / llamada.
+      await KioskModule.startLockTask(undefined, true, false, false, false);
+    } else if (lockMode === 'none') {
+      await StorageService.saveKioskEnabled(false);
+      await KioskModule.stopLockTask();
+    }
+  } catch (err) {
+    console.warn('[WebView] no se pudo aplicar lockMode del portal:', err);
+  }
+}
+
 interface WebViewComponentProps {
   url: string;
   autoReload: boolean;
@@ -777,6 +802,12 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
             StorageService.saveReturnTapTimeout(cfg.exitDetectionTimeoutMs).catch((err: any) =>
               console.warn('[WebView] no se pudo guardar exitDetectionTimeoutMs:', err),
             );
+          }
+          // Auto-kiosk: el portal administra el bloqueo del dispositivo vía
+          // lockMode. Solo se aplica si la app ya es Device Owner (provisionada
+          // por ADB): así nunca deja fuera a un tablet sin provisionar.
+          if (typeof cfg.lockMode === 'string') {
+            void applyLockModeFromPortal(cfg.lockMode);
           }
         }
       } catch (e) {
