@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import KioskScreen from '../screens/KioskScreen';
 import PinScreen from '../screens/PinScreen';
+import PairingScreen from '../screens/PairingScreen';
 // v1.2: Use new settings screen with Material tabs
 import { SettingsScreen } from '../screens/settings';
 import BlockingOverlaysScreen from '../screens/settings/BlockingOverlaysScreen';
@@ -10,6 +11,7 @@ import BlockingOverlaysScreen from '../screens/settings/BlockingOverlaysScreen';
 export type RootStackParamList = {
   Kiosk: undefined;
   Pin: undefined;
+  Pairing: undefined;
   Settings: undefined;
   BlockingOverlays: undefined;
 };
@@ -40,8 +42,15 @@ const AppNavigator: React.FC = () => {
             gestureEnabled: false,
           }}
         />
-        <Stack.Screen 
-          name="Settings" 
+        <Stack.Screen
+          name="Pairing"
+          component={PairingScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Settings"
           component={SettingsScreen}
           options={{
             headerShown: false, // v1.2: Custom header with tabs
