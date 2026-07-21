@@ -14,8 +14,7 @@ export const SOMELIER_BASE_URL = "http://somelier-kioskclient-hkrwfq-d87803-51-2
 // shell nativo reporta acá lo que el propio JS no puede (p. ej. pantalla en
 // blanco por un WebView viejo que no ejecuta el bundle). Si queda vacío, la
 // telemetría nativa se desactiva sin romper nada.
-// TODO(confirmar): reemplazar por la URL pública real del servicio admin-api.
-export const SOMELIER_ADMIN_API_URL = "";
+export const SOMELIER_ADMIN_API_URL = "http://somelier-adminapi-ikhwzx-59e83c-51-222-158-5.sslip.io";
 
 /** Arma la URL completa del kiosk-client a partir del token del dispositivo. */
 export function buildSomelierUrl(token: string): string {
