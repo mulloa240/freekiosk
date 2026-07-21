@@ -5,6 +5,9 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../../navigation/AppNavigator';
 import { useTranslation } from 'react-i18next';
 import {
   SettingsSection,
@@ -259,6 +262,7 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
   onBackToKiosk,
 }) => {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <View>
       {/* Display Mode Selection */}
@@ -551,12 +555,16 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
             </SettingsInfoBox>
           ) : (
             <>
+              <TouchableOpacity style={styles.pairButton} onPress={() => navigation.navigate('Pairing')}>
+                <Text style={styles.pairButtonText}>Emparejar dispositivo con un código</Text>
+              </TouchableOpacity>
+
               <SettingsInput
                 label="Token del dispositivo (Somelier)"
                 value={extractSomelierToken(url)}
                 onChangeText={(token: string) => onUrlChange(buildSomelierUrl(token))}
                 placeholder="Pegá acá el token del dispositivo"
-                hint="Se obtiene al registrar el dispositivo en el portal. La URL completa se arma sola."
+                hint="Se obtiene al emparejar o al registrar el dispositivo en el portal. La URL completa se arma sola."
               />
 
               <SettingsInput
@@ -1075,6 +1083,18 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
 };
 
 const styles = StyleSheet.create({
+  pairButton: {
+    backgroundColor: '#3b6fd4',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  pairButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   infoText: {
     ...Typography.body,
     lineHeight: 22,
