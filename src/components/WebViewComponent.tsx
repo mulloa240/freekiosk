@@ -23,6 +23,7 @@ import type { WebViewErrorEvent, ShouldStartLoadRequest, WebViewRenderProcessGon
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import PrintModule from '../utils/PrintModule';
+import { postSomelierTelemetry } from '../utils/somelierTelemetry';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -737,6 +738,37 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
 
   const combinedInjectedJavaScript = injectedJavaScript + getKeyboardModeScript();
 
+  // Telemetría Somelier: se inyecta ANTES de cargar el contenido, así el
+  // window.onerror queda instalado a tiempo para capturar un SyntaxError del
+  // bundle del kiosk-client (WebView viejo -> pantalla en blanco). Reporta
+  // también el User-Agent (versión de WebView), que llega aunque el SPA no
+  // arranque. Los beacons salen por postMessage y los reenvía onMessageHandler.
+  const somelierTelemetryBeforeContent = `
+    (function(){
+      try {
+        var send = function(kind, message, source, stack){
+          try {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'SOMELIER_TELEMETRY', kind: kind, message: message,
+              source: source, stack: stack, userAgent: navigator.userAgent
+            }));
+          } catch(e){}
+        };
+        send('webview_info', navigator.userAgent, '', '');
+        window.addEventListener('error', function(e){
+          send('js_error', (e && e.message) || 'error',
+            (e && e.filename ? (e.filename + ':' + e.lineno + ':' + e.colno) : ''),
+            (e && e.error && e.error.stack) || '');
+        }, true);
+        window.addEventListener('unhandledrejection', function(e){
+          var r = e && e.reason;
+          send('js_error', (r && r.message) || String(r), '', (r && r.stack) || '');
+        });
+      } catch(e){}
+    })();
+    true;
+  `;
+
   // Gestion des messages venant de la webview
   const onMessageHandler = (event: any) => {
     const message = event.nativeEvent.data;
@@ -781,6 +813,15 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
           PrintModule.printWebView(data.title || 'FreeKiosk Print', data.paperSize || 'A4')
             .then(() => console.log('[WebView] Print job started'))
             .catch((err: any) => console.error('[WebView] Print failed:', err));
+        } else if (data.type === 'SOMELIER_TELEMETRY') {
+          // Telemetría reenviada por el script inyectado (errores de JS del
+          // kiosk-client y versión de WebView). Se manda a admin-api.
+          postSomelierTelemetry(url, data.kind || 'js_error', {
+            message: data.message,
+            source: data.source,
+            stack: data.stack,
+            userAgent: data.userAgent,
+          });
         } else if (data.type === 'PDF_VIEWER_CLOSE') {
           // User closed PDF viewer, go back to previous page
           if (webViewRef.current) {
@@ -821,6 +862,12 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
 
   const handleError = (event: WebViewErrorEvent): void => {
     console.error('[FreeKiosk] WebView error:', event.nativeEvent);
+    // Telemetría Somelier: la página no cargó (red/URL/SSL). Es justo el caso
+    // que el JS del kiosk-client no puede auto-reportar.
+    postSomelierTelemetry(url, 'native_error', {
+      message: `${event.nativeEvent.code ?? ''} ${event.nativeEvent.description ?? ''}`.trim(),
+      url: event.nativeEvent.url,
+    });
     setError(true);
     setLoading(false);
     
@@ -841,6 +888,11 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
     const statusCode = event.nativeEvent.statusCode;
     const failedUrl = event.nativeEvent.url;
     console.error('[FreeKiosk] HTTP Error:', statusCode, failedUrl);
+    // Telemetría Somelier: status >= 400 del documento principal (p. ej. el
+    // kiosk-client caído, o un 404 en index.html tras un mal deploy).
+    if (!failedUrl || !lastTopFrameUrlRef.current || failedUrl === lastTopFrameUrlRef.current) {
+      postSomelierTelemetry(url, 'http_error', { message: String(statusCode), url: failedUrl });
+    }
 
     // Only treat the error as fatal when it comes from the main document.
     // onReceivedHttpError also fires for sub-resources (images, scripts,
@@ -875,6 +927,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   const handleRenderProcessGone = (event: WebViewRenderProcessGoneEvent): void => {
     const didCrash = !!event?.nativeEvent?.didCrash;
     console.error('[FreeKiosk] WebView renderer process gone (didCrash=' + didCrash + '), recovering...');
+    postSomelierTelemetry(url, 'render_gone', { message: `didCrash=${didCrash}` });
     try {
       webViewRef.current?.clearCache(true);
     } catch {
@@ -1047,6 +1100,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
 
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        injectedJavaScriptBeforeContentLoaded={somelierTelemetryBeforeContent}
         injectedJavaScript={combinedInjectedJavaScript}
 
         onMessage={onMessageHandler}

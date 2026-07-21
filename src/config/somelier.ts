@@ -10,10 +10,22 @@
  */
 export const SOMELIER_BASE_URL = "http://somelier-kioskclient-hkrwfq-d87803-51-222-158-5.sslip.io";
 
+// Base pública de admin-api, para la telemetría remota (observabilidad). El
+// shell nativo reporta acá lo que el propio JS no puede (p. ej. pantalla en
+// blanco por un WebView viejo que no ejecuta el bundle). Si queda vacío, la
+// telemetría nativa se desactiva sin romper nada.
+export const SOMELIER_ADMIN_API_URL = "http://somelier-adminapi-ikhwzx-59e83c-51-222-158-5.sslip.io";
+
 /** Arma la URL completa del kiosk-client a partir del token del dispositivo. */
 export function buildSomelierUrl(token: string): string {
   const trimmed = token.trim();
   return trimmed ? `${SOMELIER_BASE_URL}/?token=${encodeURIComponent(trimmed)}` : "";
+}
+
+/** Endpoint de ingesta de telemetría (vacío si admin-api no está configurado). */
+export function somelierTelemetryUrl(): string {
+  const base = SOMELIER_ADMIN_API_URL.replace(/\/$/, "");
+  return base ? `${base}/telemetry` : "";
 }
 
 /** Extrae el token de una URL ya guardada (para prellenar el campo). */
