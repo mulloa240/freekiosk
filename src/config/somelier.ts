@@ -8,13 +8,18 @@
  *
  * Si en algún momento cambia el dominio del kiosk-client, se actualiza acá.
  */
-export const SOMELIER_BASE_URL = "http://somelier-kioskclient-hkrwfq-d87803-51-222-158-5.sslip.io";
+// HTTPS: requerido para que el Service Worker del kiosk-client se registre y el
+// caché de medios viva en DISCO (offline-first real). Sobre http:// el SW no se
+// registra (contexto no seguro) y los binarios no persisten. Requiere TLS
+// habilitado en Dokploy para estos dominios.
+export const SOMELIER_BASE_URL = "https://somelier-kioskclient-hkrwfq-d87803-51-222-158-5.sslip.io";
 
 // Base pública de admin-api, para la telemetría remota (observabilidad). El
 // shell nativo reporta acá lo que el propio JS no puede (p. ej. pantalla en
 // blanco por un WebView viejo que no ejecuta el bundle). Si queda vacío, la
-// telemetría nativa se desactiva sin romper nada.
-export const SOMELIER_ADMIN_API_URL = "http://somelier-adminapi-ikhwzx-59e83c-51-222-158-5.sslip.io";
+// telemetría nativa se desactiva sin romper nada. HTTPS por la regla de
+// contenido mixto (la página del kiosko será https).
+export const SOMELIER_ADMIN_API_URL = "https://somelier-adminapi-ikhwzx-59e83c-51-222-158-5.sslip.io";
 
 /** Arma la URL completa del kiosk-client a partir del token del dispositivo. */
 export function buildSomelierUrl(token: string): string {
