@@ -12,6 +12,18 @@
  */
 import { Platform } from 'react-native';
 import { extractSomelierToken, somelierTelemetryUrl } from '../config/somelier';
+import KioskModule from './KioskModule';
+
+// Versión REAL del proveedor de WebView (no el User-Agent, que puede estar
+// sobrescrito). Se consulta una vez y se cachea; se adjunta a cada beacon.
+let webViewVersion: string | undefined;
+KioskModule.getWebViewVersion?.()
+  .then((v) => {
+    webViewVersion = v;
+  })
+  .catch(() => {
+    webViewVersion = undefined;
+  });
 
 export type SomelierTelemetryKind =
   | 'native_error'
@@ -61,6 +73,7 @@ export function postSomelierTelemetry(
     kind,
     origin: 'native',
     appVersion: `freekiosk-${Platform.OS}`,
+    webviewVersion: webViewVersion,
     url: extra.url,
     userAgent: extra.userAgent,
     message: extra.message?.slice(0, 2000),
