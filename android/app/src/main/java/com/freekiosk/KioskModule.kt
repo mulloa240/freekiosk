@@ -74,6 +74,27 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
     // #180 — Tells MainActivity whether the Kiosk screen is the active route, so the
     // native tap-to-settings fallback (dispatchTouchEvent) only fires on the kiosk
     // screen and not while the user is inside Pin/Settings. Revert: delete this method.
+    // Telemetría Somelier: versión REAL del proveedor de WebView (Android System
+    // WebView / Chrome). El User-Agent puede estar sobrescrito (customUserAgent),
+    // así que no sirve para saber la versión real; esto sí.
+    @ReactMethod
+    fun getWebViewVersion(promise: Promise) {
+        try {
+            val pkg = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.webkit.WebView.getCurrentWebViewPackage()
+            } else {
+                null
+            }
+            if (pkg != null) {
+                promise.resolve("${pkg.packageName} ${pkg.versionName}")
+            } else {
+                promise.resolve("unknown")
+            }
+        } catch (e: Exception) {
+            promise.resolve("error: ${e.message}")
+        }
+    }
+
     @ReactMethod
     fun setKioskScreenActive(active: Boolean, promise: Promise) {
         try {

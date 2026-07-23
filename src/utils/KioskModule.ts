@@ -7,6 +7,8 @@ interface KioskModuleInterface {
   isInLockTaskMode(): Promise<boolean>;
   getLockTaskModeState(): Promise<number>;
   isDeviceOwner(): Promise<boolean>;
+  // Telemetría Somelier: versión real del proveedor de WebView (no el UA).
+  getWebViewVersion(): Promise<string>;
   hasUsageStatsPermission(): Promise<boolean>;
   requestUsageStatsPermission(): Promise<boolean>;
   shouldBlockAutoRelaunch(): Promise<boolean>;
