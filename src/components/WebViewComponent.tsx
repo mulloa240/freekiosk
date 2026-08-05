@@ -24,6 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import PrintModule from '../utils/PrintModule';
 import { postSomelierTelemetry } from '../utils/somelierTelemetry';
+import { saveSomelierContent, loadSomelierContent } from '../utils/somelierContentStore';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -827,6 +828,23 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
           if (webViewRef.current) {
             webViewRef.current.goBack();
           }
+        } else if (data.type === 'SOMELIER_STATE') {
+          // Durabilidad indefinida del contenido: el kiosk-client espeja acá lo
+          // que debe mostrar. Se guarda en el almacenamiento NATIVO, que
+          // sobrevive a que Android limpie el storage del WebView, a una
+          // reinstalación del APK y a un cambio de origen de la URL. Un
+          // snapshot vacío = contenido dado de baja -> se borra la copia.
+          void saveSomelierContent(data.state);
+        } else if (data.type === 'SOMELIER_STATE_REQUEST') {
+          // El kiosk-client arrancó sin contenido local: se le devuelve la
+          // copia duradera para que lo muestre aunque no haya red.
+          void loadSomelierContent().then((json) => {
+            if (!json) return;
+            const safe = JSON.stringify(json); // escapa comillas/saltos
+            webViewRef.current?.injectJavaScript(
+              `window.__somelierRestoreState && window.__somelierRestoreState(${safe}); true;`,
+            );
+          });
         } else if (data.type === 'SOMELIER_CONFIG' && data.config) {
           // Fase 2 (plataforma Somelier): la config heredada llega al
           // kiosk-client por WebSocket, que reenvia aca el subconjunto de
