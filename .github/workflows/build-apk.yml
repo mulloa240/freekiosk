@@ -35,7 +35,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # Solo platform-tools: el paquete 'tools' (default de la accion) fue
+      # retirado del repositorio del SDK y hacia fallar el setup con
+      # "Failed to find package 'tools'". Platforms/build-tools los resuelve
+      # AGP (las licencias ya quedan aceptadas por la accion).
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install JS dependencies
         run: npm ci
