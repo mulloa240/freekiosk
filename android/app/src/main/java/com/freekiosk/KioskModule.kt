@@ -77,21 +77,20 @@ class KioskModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
     // Telemetría Somelier: versión REAL del proveedor de WebView (Android System
     // WebView / Chrome). El User-Agent puede estar sobrescrito (customUserAgent),
     // así que no sirve para saber la versión real; esto sí.
+    // En Android < 8 no existe getCurrentWebViewPackage(): DeviceStats aplica
+    // una cadena de fallbacks (reflexión, ajuste del sistema, paquetes
+    // conocidos, Chrome major del User-Agent por defecto) para no responder
+    // "unknown" justo en los equipos viejos que más interesa identificar.
+    // Se resuelve en el hilo UI porque leer el UA por defecto puede
+    // inicializar el proveedor de WebView.
     @ReactMethod
     fun getWebViewVersion(promise: Promise) {
-        try {
-            val pkg = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                android.webkit.WebView.getCurrentWebViewPackage()
-            } else {
-                null
+        UiThreadUtil.runOnUiThread {
+            try {
+                promise.resolve(DeviceStats.webViewVersionLabel(reactApplicationContext))
+            } catch (e: Exception) {
+                promise.resolve("error: ${e.message}")
             }
-            if (pkg != null) {
-                promise.resolve("${pkg.packageName} ${pkg.versionName}")
-            } else {
-                promise.resolve("unknown")
-            }
-        } catch (e: Exception) {
-            promise.resolve("error: ${e.message}")
         }
     }
 

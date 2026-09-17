@@ -14,6 +14,7 @@ import {
 } from '../../../components/settings';
 import { ApiSettingsSection } from '../../../components/ApiSettingsSection';
 import { MqttSettingsSection } from '../../../components/MqttSettingsSection';
+import { DiagnosticsSection } from '../../../components/DiagnosticsSection';
 import { CertificateInfo } from '../../../utils/CertificateModule';
 import AccessibilityModule from '../../../utils/AccessibilityModule';
 import { Colors, Spacing, Typography } from '../../../theme';
@@ -227,6 +228,9 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
         </SettingsSection>
       )}
       
+      {/* Somelier: auto-diagnóstico de compatibilidad */}
+      <DiagnosticsSection />
+
       {/* REST API - Home Assistant Integration */}
       <ApiSettingsSection />
 

@@ -40,6 +40,7 @@ Key native modules:
 - **HttpServerModule.kt** — embedded HTTP server for REST API
 - **FreeKioskAccessibilityService.kt** — accessibility service for back-button/gesture suppression
 - **BackgroundAppMonitorService.kt** / **KioskWatchdogService.kt** — foreground services keeping kiosk alive
+- **DiagnosticsModule.kt** + **DeviceStats.kt** — Somelier compatibility self-diagnostic: one `collect()` call returns device/WebView/memory/permissions/network facts (real WebView version with Android < 8 fallbacks, TLS/DNS/clock probes). Evaluation lives in `src/utils/selfDiagnostic/` (pure, tested in `__tests__/selfDiagnostic/`); results go to admin-api `POST /telemetry/diagnostics`.
 
 ### State & Storage
 

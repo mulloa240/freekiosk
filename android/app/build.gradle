@@ -99,11 +99,15 @@ android {
         applicationId "com.freekiosk"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 48
-        versionName "1.2.25"
+        versionCode 49
+        versionName "1.2.26"
 
         // Expose self-update flag to both Kotlin (BuildConfig) and JS (via UpdateModule constants)
         buildConfigField "boolean", "ENABLE_SELF_UPDATE", "${enableSelfUpdate}"
+        // Momento del build: el auto-diagnóstico lo usa para detectar un reloj
+        // del equipo anterior a la fecha del build (cajas TV sin RTC arrancan
+        // en 1970/2009 y TLS falla hasta que sincronizan la hora).
+        buildConfigField "long", "BUILD_TIME", "${System.currentTimeMillis()}L"
 
         // Fork Somelier: updates deshabilitados (receiver apagado), pero el
         // accessibility service se mantiene activo — lo usa el control remoto
