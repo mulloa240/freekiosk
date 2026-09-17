@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -25,6 +25,14 @@ import { useTranslation } from 'react-i18next';
 import PrintModule from '../utils/PrintModule';
 import { postSomelierTelemetry } from '../utils/somelierTelemetry';
 import { saveSomelierContent, loadSomelierContent } from '../utils/somelierContentStore';
+import {
+  registerProbeRunner,
+  unregisterProbeRunner,
+  resolveProbeResult,
+  runRemoteDiagnostic,
+  flushPendingDiagnostics,
+  type ProbeRunner,
+} from '../utils/selfDiagnostic';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -120,6 +128,21 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const webViewRef = useRef<WebView>(null);
+
+  // Auto-diagnóstico (Somelier): mientras este WebView está montado, es quien
+  // ejecuta la sonda de capacidades JS (inyección) para los diagnósticos
+  // automáticos y remotos. El resultado vuelve por onMessage
+  // (SOMELIER_DIAG_PROBE_RESULT) y lo resuelve el probeBus.
+  useEffect(() => {
+    const runner: ProbeRunner = (script) => {
+      const wv = webViewRef.current;
+      if (!wv) return false;
+      wv.injectJavaScript(script);
+      return true;
+    };
+    registerProbeRunner(runner);
+    return () => unregisterProbeRunner(runner);
+  }, []);
   // #190 — Host-view ref for pauseMedia/resumeMedia. react-native-webview's ref is a
   // methods-only imperative handle, NOT a ReactComponent: passing it to findNodeHandle
   // throws and crashes the app (JavascriptException on screensaver activation). The
@@ -780,7 +803,13 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
       // Parse JSON message
       try {
         const data = JSON.parse(message);
-        if (data.type === 'FIVE_TAP_CLICK' && onUserInteraction) {
+        if (resolveProbeResult(data)) {
+          // Resultado de la sonda del auto-diagnóstico: ya resuelto en probeBus.
+        } else if (data.type === 'SOMELIER_DIAG_REQUEST') {
+          // El portal pidió un diagnóstico (comando run_diagnostics → kiosk-client
+          // → acá). Se ejecuta y se sube con trigger "remote".
+          void runRemoteDiagnostic(typeof data.commandId === 'string' ? data.commandId : undefined);
+        } else if (data.type === 'FIVE_TAP_CLICK' && onUserInteraction) {
           onUserInteraction({ isTap: true, x: data.x, y: data.y });
         } else if (data.type === 'SPEECH_SYNTH_SPEAK') {
           // speechSynthesis polyfill: bridge to native Android TTS
@@ -1092,6 +1121,9 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
           if (!error) {
             setLoading(false);
             setPageLoaded(true);
+            // La página cargó: hay red. Buen momento para reintentar el envío
+            // de diagnósticos en cola (throttled dentro).
+            void flushPendingDiagnostics();
           }
 
           // Clear timeout since load completed normally

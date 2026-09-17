@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [1.2.26] - 2026-09-17 (Somelier)
+
+### Added
+- **Auto-diagnóstico de compatibilidad** (Ajustes → Avanzado y pantalla de emparejamiento): recolecta modelo, Android/API real, ABIs, WebView real (con fallbacks para Android < 8), memoria/heap, almacenamiento, permisos (Device Owner, accesibilidad, overlay, instalación), red (alcance del kiosko y de la API con clasificación TLS/DNS/timeout, desfase de reloj) y una sonda de capacidades JS ejecutada en el WebView. Evalúa checks con veredicto `compatible` / `compatible_with_limitations` / `not_compatible`, detecta versiones de Android falseadas en `build.prop` (cajas TV baratas) y sube el reporte a admin-api (`POST /telemetry/diagnostics`), con cola offline. Se ejecuta solo tras emparejar, la primera vez y al cambiar de versión; el portal puede pedirlo con el comando `run_diagnostics`.
+- Nuevo módulo nativo `DiagnosticsModule` y `DeviceStats` compartido con el servidor REST (`/api/memory`, `/api/storage` ahora incluyen `memoryClassMB`/`largeMemoryClassMB`).
+- Manifest: `uses-feature` táctil/faketouch/leanback opcionales, `LEANBACK_LAUNCHER`, banner de TV y `largeHeap` (preparación para cajas Android TV como X96 mini).
+
+### Changed
+- `getWebViewVersion` identifica el proveedor de WebView también en Android 7 (ya no responde `unknown`).
+- La telemetría nativa reporta la versión real de la app (`freekiosk-android/<versionName>`).
+
 ## [Unreleased]
 
 ### Fixed

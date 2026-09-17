@@ -41,6 +41,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule
 import android.accessibilityservice.AccessibilityService
 import android.os.Build
 import com.freekiosk.DeviceAdminReceiver
+import com.freekiosk.DeviceStats
 import com.freekiosk.CameraPhotoModule
 import com.freekiosk.FreeKioskAccessibilityService
 import com.freekiosk.ScreenController
@@ -1164,23 +1165,10 @@ class HttpServerModule(private val reactContext: ReactApplicationContext) :
         }
     }
 
+    // Lecturas compartidas con el auto-diagnóstico y MQTT (ver DeviceStats).
     private fun getStorageInfo(): JSONObject {
         return try {
-            val stat = StatFs(Environment.getDataDirectory().path)
-            val blockSize = stat.blockSizeLong
-            val totalBlocks = stat.blockCountLong
-            val availableBlocks = stat.availableBlocksLong
-            
-            val totalBytes = totalBlocks * blockSize
-            val availableBytes = availableBlocks * blockSize
-            val usedBytes = totalBytes - availableBytes
-            
-            JSONObject().apply {
-                put("totalMB", totalBytes / (1024 * 1024))
-                put("availableMB", availableBytes / (1024 * 1024))
-                put("usedMB", usedBytes / (1024 * 1024))
-                put("usedPercent", ((usedBytes.toDouble() / totalBytes) * 100).toInt())
-            }
+            DeviceStats.storage().toJson()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get storage info", e)
             JSONObject().apply {
@@ -1194,21 +1182,7 @@ class HttpServerModule(private val reactContext: ReactApplicationContext) :
 
     private fun getMemoryInfo(): JSONObject {
         return try {
-            val activityManager = reactContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            val memInfo = ActivityManager.MemoryInfo()
-            activityManager.getMemoryInfo(memInfo)
-            
-            val totalMB = memInfo.totalMem / (1024 * 1024)
-            val availableMB = memInfo.availMem / (1024 * 1024)
-            val usedMB = totalMB - availableMB
-            
-            JSONObject().apply {
-                put("totalMB", totalMB)
-                put("availableMB", availableMB)
-                put("usedMB", usedMB)
-                put("usedPercent", ((usedMB.toDouble() / totalMB) * 100).toInt())
-                put("lowMemory", memInfo.lowMemory)
-            }
+            DeviceStats.memory(reactContext).toJson()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get memory info", e)
             JSONObject().apply {

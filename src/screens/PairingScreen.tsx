@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { StorageService } from '../utils/storage';
 import { buildSomelierUrl } from '../config/somelier';
+import { diagnosticStore } from '../utils/selfDiagnostic';
 import {
   initPairing,
   validatePairing,
@@ -77,6 +78,10 @@ const PairingScreen: React.FC<{ navigation: Nav }> = ({ navigation }) => {
       const { deviceToken } = await validatePairing(session.sessionId, code);
       // Éxito: se guarda el token como URL del kiosko y se entra al kiosko.
       await StorageService.saveUrl(buildSomelierUrl(deviceToken));
+      // El primer auto-diagnóstico se corre en cuanto arranque el kiosko, para
+      // que el portal tenga la ficha de compatibilidad del equipo recién
+      // emparejado sin que nadie toque un botón.
+      await diagnosticStore.markDue();
       navigation.reset({ index: 0, routes: [{ name: 'Kiosk' }] });
     } catch (e) {
       const err = e as PairingError;
@@ -195,6 +200,10 @@ const PairingScreen: React.FC<{ navigation: Nav }> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       )}
+
+      <TouchableOpacity onPress={() => navigation.navigate('Diagnostics')}>
+        <Text style={styles.link}>Diagnóstico de compatibilidad</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Text style={styles.link}>Cancelar</Text>

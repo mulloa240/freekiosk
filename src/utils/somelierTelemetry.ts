@@ -13,6 +13,7 @@
 import { Platform } from 'react-native';
 import { extractSomelierToken, somelierTelemetryUrl } from '../config/somelier';
 import KioskModule from './KioskModule';
+import UpdateModule from './UpdateModule';
 
 // Versión REAL del proveedor de WebView (no el User-Agent, que puede estar
 // sobrescrito). Se consulta una vez y se cachea; se adjunta a cada beacon.
@@ -24,6 +25,19 @@ KioskModule.getWebViewVersion?.()
   .catch(() => {
     webViewVersion = undefined;
   });
+
+// Versión real de la app (antes se mandaba el literal "freekiosk-android").
+// Se mantiene el prefijo para no romper lecturas existentes en el portal.
+let appVersionLabel = `freekiosk-${Platform.OS}`;
+try {
+  UpdateModule.getCurrentVersion()
+    .then((v) => {
+      if (v?.versionName) appVersionLabel = `freekiosk-${Platform.OS}/${v.versionName}`;
+    })
+    .catch(() => {});
+} catch {
+  // Sin módulo nativo (tests / otra plataforma): se queda el prefijo.
+}
 
 export type SomelierTelemetryKind =
   | 'native_error'
@@ -72,7 +86,7 @@ export function postSomelierTelemetry(
     token,
     kind,
     origin: 'native',
-    appVersion: `freekiosk-${Platform.OS}`,
+    appVersion: appVersionLabel,
     webviewVersion: webViewVersion,
     url: extra.url,
     userAgent: extra.userAgent,
