@@ -25,7 +25,7 @@ export function buildSummary(checks: DiagnosticCheck[], verdict: DiagnosticVerdi
       headline = `Compatible; pendiente de configuración: ${setupIssues.join(', ')}`;
     }
   } else {
-    headline = 'Compatible con el kiosko Somelier';
+    headline = 'Compatible con el kiosko Catas';
   }
 
   return { headline: headline.slice(0, 200), failed, warned, setupIssues };

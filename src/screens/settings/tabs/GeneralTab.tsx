@@ -560,7 +560,7 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
               </TouchableOpacity>
 
               <SettingsInput
-                label="Token del dispositivo (Somelier)"
+                label="Token del dispositivo (Catas)"
                 value={extractSomelierToken(url)}
                 onChangeText={(token: string) => onUrlChange(buildSomelierUrl(token))}
                 placeholder="Pegá acá el token del dispositivo"
