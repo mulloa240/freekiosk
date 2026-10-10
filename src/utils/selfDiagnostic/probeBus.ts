@@ -12,7 +12,13 @@ import type { ProbeSection } from './types';
 export type ProbeRunner = (script: string, requestId: string) => boolean;
 
 let registeredRunner: ProbeRunner | undefined;
+// WebView oculto montado en la raíz de la app (DiagnosticProbeHost): se usa
+// cuando el del kiosko no está o no puede correr la sonda (pantalla de error,
+// visor de PDF).
+let fallbackRunner: ProbeRunner | undefined;
 const pending = new Map<string, (section: ProbeSection) => void>();
+
+export const DEFAULT_PROBE_TIMEOUT_MS = 10_000;
 
 export function registerProbeRunner(runner: ProbeRunner): void {
   registeredRunner = runner;
@@ -22,8 +28,16 @@ export function unregisterProbeRunner(runner: ProbeRunner): void {
   if (registeredRunner === runner) registeredRunner = undefined;
 }
 
+export function registerFallbackProbeRunner(runner: ProbeRunner): void {
+  fallbackRunner = runner;
+}
+
+export function unregisterFallbackProbeRunner(runner: ProbeRunner): void {
+  if (fallbackRunner === runner) fallbackRunner = undefined;
+}
+
 export function hasProbeRunner(): boolean {
-  return registeredRunner !== undefined;
+  return registeredRunner !== undefined || fallbackRunner !== undefined;
 }
 
 /** Llamar desde onMessage del WebView con el JSON ya parseado. Devuelve true si era una sonda. */
@@ -47,10 +61,12 @@ export interface RunProbeOptions {
 
 /** Ejecuta la sonda y espera el resultado; `ran: false` si no hay dónde correrla o expira. */
 export function runProbe(options: RunProbeOptions = {}): Promise<ProbeSection> {
-  const runner = options.runner ?? registeredRunner;
-  if (!runner) return Promise.resolve({ ran: false });
+  const runners = (options.runner ? [options.runner] : [registeredRunner, fallbackRunner]).filter(
+    (r): r is ProbeRunner => r !== undefined,
+  );
+  if (runners.length === 0) return Promise.resolve({ ran: false });
   const requestId = newRequestId();
-  const timeoutMs = options.timeoutMs ?? 8000;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
 
   return new Promise<ProbeSection>((resolve) => {
     const timer = setTimeout(() => {
@@ -61,11 +77,15 @@ export function runProbe(options: RunProbeOptions = {}): Promise<ProbeSection> {
       clearTimeout(timer);
       resolve(section);
     });
+    const script = buildProbeScript(requestId);
     let started = false;
-    try {
-      started = runner(buildProbeScript(requestId), requestId);
-    } catch {
-      started = false;
+    for (const runner of runners) {
+      try {
+        started = runner(script, requestId);
+      } catch {
+        started = false;
+      }
+      if (started) break;
     }
     if (!started) {
       clearTimeout(timer);

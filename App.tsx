@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { AppState, StatusBar } from 'react-native';
 import './src/i18n';
 import AppNavigator from './src/navigation/AppNavigator';
+import DiagnosticProbeHost from './src/components/DiagnosticProbeHost';
 import { runAutoUpdate } from './src/utils/autoUpdate';
 import { flushPendingDiagnostics, maybeAutoRunDiagnostic } from './src/utils/selfDiagnostic';
 
@@ -33,6 +34,7 @@ const App: React.FC = () => {
     <>
       <StatusBar hidden={true} />
       <AppNavigator />
+      <DiagnosticProbeHost />
     </>
   );
 };

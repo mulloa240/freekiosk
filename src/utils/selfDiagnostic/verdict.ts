@@ -1,10 +1,15 @@
 import type { DiagnosticCheck, DiagnosticSummary, DiagnosticVerdict } from './types';
 
+/**
+ * El veredicto habla solo del EQUIPO (checks `compat`). Lo de configuración
+ * (permisos, red, emparejamiento) se arregla sin cambiar de equipo y va
+ * aparte, en `summary.setupIssues` y en el titular: antes cualquier permiso
+ * pendiente dejaba "con limitaciones" a toda la flota, incluso a tablets
+ * nuevas, y el veredicto no distinguía nada.
+ */
 export function computeVerdict(checks: DiagnosticCheck[]): DiagnosticVerdict {
   if (checks.some((c) => c.impact === 'compat' && c.status === 'fail')) return 'not_compatible';
-  const limited = checks.some(
-    (c) => (c.impact === 'compat' && c.status === 'warn') || (c.impact === 'setup' && (c.status === 'warn' || c.status === 'fail')),
-  );
+  const limited = checks.some((c) => c.impact === 'compat' && c.status === 'warn');
   return limited ? 'compatible_with_limitations' : 'compatible';
 }
 
@@ -18,12 +23,10 @@ export function buildSummary(checks: DiagnosticCheck[], verdict: DiagnosticVerdi
     const first = checks.find((c) => c.id === failed[0]);
     headline = first?.detail ?? `No compatible: ${failed.join(', ')}`;
   } else if (verdict === 'compatible_with_limitations') {
-    if (warned.length > 0) {
-      const first = checks.find((c) => c.id === warned[0]);
-      headline = first?.detail ?? `Compatible con limitaciones: ${warned.join(', ')}`;
-    } else {
-      headline = `Compatible; pendiente de configuración: ${setupIssues.join(', ')}`;
-    }
+    const first = checks.find((c) => c.id === warned[0]);
+    headline = first?.detail ?? `Compatible con limitaciones: ${warned.join(', ')}`;
+  } else if (setupIssues.length > 0) {
+    headline = `Compatible; pendiente de configuración: ${setupIssues.join(', ')}`;
   } else {
     headline = 'Compatible con el kiosko Somelier';
   }

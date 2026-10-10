@@ -2,12 +2,24 @@ import type { ProbeSection } from './types';
 
 export const PROBE_MESSAGE_TYPE = 'SOMELIER_DIAG_PROBE_RESULT';
 
+// Plazos de la prueba del WebSocket al broker. Suman menos que el timeout
+// del probeBus (10 s) para que la sonda siempre alcance a contestar.
+const CONFIG_TIMEOUT_MS = 2000;
+const BROKER_TIMEOUT_MS = 4000;
+
 /**
  * Sonda de capacidades que corre DENTRO del WebView. Es ES5 a propósito: tiene
  * que ejecutar en un WebView tan viejo que ni parsea el bundle del
  * kiosk-client (ese es el caso que queremos medir). Cada capacidad se prueba
  * por separado en try/catch para que un fallo no tape al resto. El resultado
  * vuelve por postMessage con el `requestId` para correlacionarlo.
+ *
+ * Además abre un WebSocket real al broker de eventos (la URL sale del
+ * `/config.js` del kiosk-client): `typeof WebSocket` no dice nada de si el
+ * WiFi del local, un proxy o el TLS del equipo dejan conectar, que es lo que
+ * falla en la práctica ("websocket error" en la telemetría). Basta con el
+ * primer paquete de engine.io: el handshake de socket.io (y su token) viene
+ * después, así que no hace falta autenticarse.
  */
 export function buildProbeScript(requestId: string): string {
   const id = JSON.stringify(requestId);
@@ -15,6 +27,7 @@ export function buildProbeScript(requestId: string): string {
     (function(){
       var t0 = Date.now();
       var r = {};
+      var sent = false;
       function test(name, fn){ try { r[name] = !!fn(); } catch (e) { r[name] = false; } }
       function syntax(name, src){ try { new Function(src); r[name] = true; } catch (e) { r[name] = false; } }
       test('esModules', function(){ return 'noModule' in document.createElement('script'); });
@@ -43,10 +56,65 @@ export function buildProbeScript(requestId: string): string {
       try { r.deviceMemory = navigator.deviceMemory || 0; } catch (e) {}
       try { r.devicePixelRatio = window.devicePixelRatio || 1; } catch (e) {}
       try { r.viewport = window.innerWidth + 'x' + window.innerHeight; } catch (e) {}
-      var payload = { type: '${PROBE_MESSAGE_TYPE}', requestId: ${id}, results: r, ms: Date.now() - t0 };
-      try { payload.origin = location.origin; } catch (e) {}
-      try { payload.uaInPage = navigator.userAgent; } catch (e) {}
-      try { window.ReactNativeWebView.postMessage(JSON.stringify(payload)); } catch (e) {}
+      // Sin contexto seguro (about:blank tras un error, visor file://) no hay
+      // serviceWorker ni localStorage aunque el WebView los soporte.
+      try { r.secureContext = window.isSecureContext === true; } catch (e) {}
+
+      function send(){
+        if (sent) return;
+        sent = true;
+        var payload = { type: '${PROBE_MESSAGE_TYPE}', requestId: ${id}, results: r, ms: Date.now() - t0 };
+        try { payload.origin = location.origin; } catch (e) {}
+        try { payload.uaInPage = navigator.userAgent; } catch (e) {}
+        try { window.ReactNativeWebView.postMessage(JSON.stringify(payload)); } catch (e) {}
+      }
+
+      function brokerTest(base){
+        var t1 = Date.now();
+        var ws;
+        var done = false;
+        var timer;
+        function finish(status, detail){
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          r.brokerWs = status;
+          r.brokerWsMs = Date.now() - t1;
+          if (detail) r.brokerWsDetail = String(detail).slice(0, 100);
+          try { if (ws) ws.close(); } catch (e) {}
+          send();
+        }
+        timer = setTimeout(function(){ finish('timeout'); }, ${BROKER_TIMEOUT_MS});
+        try {
+          ws = new WebSocket(String(base).replace(/\\/+$/, '').replace(/^http/, 'ws') + '/socket.io/?EIO=4&transport=websocket');
+          ws.onmessage = function(){ finish('ok'); };
+          ws.onerror = function(){ finish('error'); };
+          ws.onclose = function(ev){ finish('error', 'close ' + (ev && ev.code)); };
+        } catch (e) { finish('error', e && e.message); }
+      }
+
+      // La URL del broker está en el /config.js del kiosk-client: ya cargado
+      // si la sonda corre en el kiosko; si no (WebView oculto), se pide.
+      function withBrokerUrl(cb){
+        var called = false;
+        function once(v){ if (!called) { called = true; cb(v); } }
+        function fromConfig(){ var c = window.__SOMELIER__; return c && c.EVENT_BROKER_URL ? c.EVENT_BROKER_URL : null; }
+        try {
+          if (fromConfig()) return once(fromConfig());
+          if (location.protocol !== 'https:') return once(null);
+          var s = document.createElement('script');
+          s.src = '/config.js?diag=' + Date.now();
+          s.onload = function(){ once(fromConfig()); };
+          s.onerror = function(){ once(null); };
+          setTimeout(function(){ once(null); }, ${CONFIG_TIMEOUT_MS});
+          (document.head || document.documentElement).appendChild(s);
+        } catch (e) { once(null); }
+      }
+
+      withBrokerUrl(function(base){
+        if (base) brokerTest(base);
+        else { r.brokerWs = 'skipped'; send(); }
+      });
     })();
     true;
   `;

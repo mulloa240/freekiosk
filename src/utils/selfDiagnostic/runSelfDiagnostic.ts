@@ -2,7 +2,7 @@ import { SOMELIER_ADMIN_API_URL, SOMELIER_BASE_URL, extractSomelierToken } from 
 import DiagnosticsModule from '../DiagnosticsModule';
 import { getInstallId } from '../somelierPairing';
 import { StorageService } from '../storage';
-import { buildChecks } from './checks';
+import { buildChecks, versionInconsistencies } from './checks';
 import { buildNetworkSection } from './network';
 import { runProbe, type ProbeRunner } from './probeBus';
 import { diagnosticStore } from './store';
@@ -75,7 +75,7 @@ async function execute(options: RunOptions): Promise<DiagnosticReport> {
   const checks = buildChecks({ snapshot, network, probe, paired, displayMode });
   const verdict = computeVerdict(checks);
   const summary = buildSummary(checks, verdict);
-  const inconsistent = checks.find((c) => c.id === 'device.versionConsistency')?.status === 'warn';
+  const inconsistent = versionInconsistencies(snapshot.device ?? {}, snapshot.webview ?? {}).length > 0;
 
   const report: DiagnosticReport = {
     schemaVersion: DIAGNOSTIC_SCHEMA_VERSION,

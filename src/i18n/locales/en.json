@@ -458,6 +458,7 @@
         "net.type": "Network type",
         "net.kioskClient": "Kiosk reachability (ms)",
         "net.adminApi": "API reachability (ms)",
+        "net.broker": "Event broker WebSocket (ms)",
         "net.clock": "Device clock (skew s)",
         "perm.deviceOwner": "Device Owner",
         "perm.lockTask": "Lock task permitted",

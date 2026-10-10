@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [1.2.27] - 2026-10-10 (Somelier)
+
+### Changed
+- **El veredicto del auto-diagnóstico habla solo del equipo.** Los permisos, la red y el emparejamiento pendientes ya no bajan a "con limitaciones": quedan en `summary.setupIssues` y en el titular ("Compatible; pendiente de configuración: …"). Antes 38 de 39 equipos de la flota salían "con limitaciones", incluidas tablets nuevas, y el veredicto no distinguía nada.
+- **Kernel según la versión de fábrica.** `device.versionConsistency` compara el kernel contra el mínimo de la versión con la que el equipo salió (`ro.product.first_api_level`) cuando fue actualizado. La Samsung SM-T510/T515 (salió con Android 9 y kernel 4.4, actualizada a 11) dejaba de marcarse como build.prop falso.
+- `device.versionConsistency` es informativo (`ok` con detalle): una caja con build.prop falso corre el kiosko igual, porque lo que decide es el API y el WebView reales, que tienen sus propios checks. El portal lo sigue marcando con `versionConsistent: false`.
+- `device.touch`: un TV box sin táctil pero con control remoto (TV o D-pad) queda `ok`.
+- `probe.serviceWorker` pasa de obligatorio a deseable (`warn`): el kiosko funciona sin Service Worker, solo pierde el modo offline. `probe.cssAspectRatio` y `probe.webgl` son informativos.
+
+### Fixed
+- **Falso "No compatible: Falta serviceWorker".** La sonda de los diagnósticos automáticos y remotos se inyectaba en lo que mostrara el WebView del kiosko, incluida la pantalla de error (`about:blank`) o el visor de PDF (`file://`), sin contexto seguro. Ahora solo corre sobre el kiosko cargado por https; si no, usa un WebView oculto de respaldo montado en la raíz de la app (`DiagnosticProbeHost`). Si aun así corre sin contexto seguro, `serviceWorker` y `localStorage` quedan `skip` en vez de `fail`.
+
+### Added
+- Check `net.broker` (configuración): la sonda abre un WebSocket real al broker de eventos (URL del `/config.js` del kiosk-client) y reporta si conecta, en cuánto tiempo, o por qué no. Es lo que falla en la práctica ("websocket error") y antes no se medía.
+
 ## [1.2.26] - 2026-09-17 (Somelier)
 
 ### Added

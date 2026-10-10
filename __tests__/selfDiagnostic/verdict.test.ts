@@ -24,10 +24,17 @@ describe('computeVerdict / buildSummary', () => {
     expect(summary.setupIssues).toEqual(['perm.x']);
   });
 
-  it('un warn de compatibilidad o un fail de configuración → con limitaciones', () => {
-    expect(computeVerdict([c('memory.total', 'warn', 'compat')])).toBe('compatible_with_limitations');
-    expect(computeVerdict([c('net.type', 'fail', 'setup')])).toBe('compatible_with_limitations');
-    const summary = buildSummary([c('net.type', 'fail', 'setup')], 'compatible_with_limitations');
-    expect(summary.headline).toMatch(/pendiente de configuración: net.type/);
+  it('un warn de compatibilidad → con limitaciones, con su detalle como titular', () => {
+    const checks = [c('memory.total', 'warn', 'compat', 'Menos de 2 GB de RAM'), c('perm.x', 'warn', 'setup')];
+    expect(computeVerdict(checks)).toBe('compatible_with_limitations');
+    expect(buildSummary(checks, 'compatible_with_limitations').headline).toBe('Menos de 2 GB de RAM');
+  });
+
+  it('lo de configuración no baja el veredicto: compatible, con lo pendiente en el titular', () => {
+    const checks = [c('a', 'ok', 'compat'), c('net.type', 'fail', 'setup'), c('perm.deviceOwner', 'warn', 'setup')];
+    expect(computeVerdict(checks)).toBe('compatible');
+    const summary = buildSummary(checks, 'compatible');
+    expect(summary.headline).toBe('Compatible; pendiente de configuración: net.type, perm.deviceOwner');
+    expect(summary.setupIssues).toEqual(['net.type', 'perm.deviceOwner']);
   });
 });

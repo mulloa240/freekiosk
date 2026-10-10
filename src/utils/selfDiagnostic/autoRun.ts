@@ -1,4 +1,4 @@
-import { hasProbeRunner } from './probeBus';
+import { DEFAULT_PROBE_TIMEOUT_MS, hasProbeRunner } from './probeBus';
 import { runSelfDiagnostic } from './runSelfDiagnostic';
 import { flushPendingDiagnostics, postDiagnosticReport } from './sender';
 import { diagnosticStore } from './store';
@@ -41,7 +41,7 @@ export async function maybeAutoRunDiagnostic(): Promise<void> {
       trigger: 'auto',
       // Si el WebView del kiosko no está montado, la sonda queda en skip; el
       // resto del reporte sigue siendo útil.
-      probeTimeoutMs: hasProbeRunner() ? 8000 : 0,
+      probeTimeoutMs: hasProbeRunner() ? DEFAULT_PROBE_TIMEOUT_MS : 0,
     });
     const outcome = await postDiagnosticReport(report);
     if (outcome === 'sent') await diagnosticStore.clearDue();
