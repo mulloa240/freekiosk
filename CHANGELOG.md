@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [1.3.1] - 2026-10-10 (Catas)
+
+### Changed
+- **Dominio propio**: el kiosko carga `https://kiosko.landriuss.cl` y la app habla con `https://api.landriuss.cl` (emparejamiento, telemetría y auto-diagnóstico), en vez de los dominios `sslip.io`.
+- Las tablets ya emparejadas pasan solas al dominio nuevo: al leer la URL guardada, si usa el dominio viejo del kiosko (`https://` o el `http://` de antes del TLS) se reescribe al nuevo con el mismo token y se guarda así. No hay que volver a emparejar. Cualquier otra URL queda igual.
+
 ## [1.3.0] - 2026-10-10 (Catas)
 
 ### Changed
