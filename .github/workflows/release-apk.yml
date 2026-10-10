@@ -1,4 +1,4 @@
-# Publica una GitHub Release con el APK del fork Somelier Kiosk.
+# Publica una GitHub Release con el APK del fork Catas Kiosk (antes Somelier Kiosk).
 #
 # Se dispara al pushear un tag de version (vX.Y.Z). Compila el APK release y lo
 # adjunta como asset de la Release, con el nombre FreeKiosk-v<version>.apk que
@@ -82,6 +82,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.value }}
-          name: Somelier Kiosk v${{ steps.version.outputs.value }}
+          name: Catas Kiosk v${{ steps.version.outputs.value }}
           files: release-out/*.apk
           generate_release_notes: true
