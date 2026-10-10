@@ -400,7 +400,7 @@
       "bRemoveDeviceOwner": "Remove Device Owner",
       "bExitKiosk": "Exit Kiosk Mode",
       "tDiagnostics": "Compatibility self-diagnostic",
-      "hDiagIntro": "Checks whether this device can run the Somelier kiosk (real Android and WebView versions, memory, permissions, network) and sends the result to the portal.",
+      "hDiagIntro": "Checks whether this device can run the Catas kiosk (real Android and WebView versions, memory, permissions, network) and sends the result to the portal.",
       "bRunDiag": "Run self-diagnostic",
       "bSendDiag": "Send to portal",
       "bCopyDiag": "Copy JSON",

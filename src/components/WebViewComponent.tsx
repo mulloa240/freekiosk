@@ -1022,7 +1022,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
             </View>
 
             {/* Title */}
-            <Text style={styles.welcomeTitle}>Somelier Kiosk</Text>
+            <Text style={styles.welcomeTitle}>Catas Kiosk</Text>
             <Text style={styles.welcomeSubtitle}>
               {t('welcome.subtitle')}
             </Text>
