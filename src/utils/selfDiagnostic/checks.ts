@@ -7,10 +7,17 @@ import type { CheckImpact, CheckStatus, DiagnosticCheck, NativeDiagnosticsSnapsh
  */
 
 export const THRESHOLDS = {
-  // Piso del bundle legacy del kiosk-client (plugin-legacy: chrome >= 61) y
-  // piso del bundle moderno (sintaxis ES2020: optional chaining).
-  chromeLegacyMin: 61,
+  // Piso del bundle legacy del kiosk-client (plugin-legacy `targets`:
+  // chrome >= 52 desde que las X96 mini no arrancaban con 61). Por debajo no
+  // hay bundle que parsee. Antes esto decía 61 y un WebView 52-60 salía "No
+  // compatible" aunque el kiosko arrancara.
+  chromeLegacyMin: 52,
+  // Desde acá el WebView es "ok": sintaxis ES2020 (optional chaining). Entre
+  // el piso y esto el kiosko anda, con el bundle legacy.
   chromeModernMin: 80,
+  // Lo mínimo que se puede inferir de la sonda sin User-Agent: `noModule`
+  // existe desde Chrome 61.
+  chromeNoModule: 61,
   ramOkMB: 2048,
   ramMinMB: 768,
   heapOkMB: 192,
@@ -241,7 +248,7 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
   if (typeof chrome !== 'number') {
     // Sin UA por defecto: se infiere del probe (noModule ⇒ >= 61, optional chaining ⇒ >= 80).
     if (results.optionalChaining === true) chrome = T.chromeModernMin;
-    else if (results.esModules === true) chrome = T.chromeLegacyMin;
+    else if (results.esModules === true) chrome = T.chromeNoModule;
   }
   const wvLabel = webview.packageName ? `${webview.packageName} ${webview.versionName ?? ''}`.trim() : undefined;
   if (typeof chrome === 'number') {

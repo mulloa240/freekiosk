@@ -20,12 +20,14 @@ describe('buildChecks', () => {
     expect(checks.length).toBeGreaterThan(20);
   });
 
-  it('una caja "Android 13" falseada sobre 7.1 con WebView 58 falla por el WebView; la versión falsa queda informada', () => {
+  it('una caja "Android 13" falseada sobre 7.1 con WebView 58: corre el bundle legacy; la versión falsa queda informada', () => {
     const snapshot = fakeAndroid13BoxSnapshot();
     const network = buildNetworkSection(snapshot);
     const map = byId(buildChecks({ snapshot, network, probe: { ran: false }, paired: false, displayMode: 'webview' }));
 
-    expect(map.get('webview.version')?.status).toBe('fail');
+    // El bundle legacy del kiosko arranca desde Chrome 52.
+    expect(map.get('webview.version')?.status).toBe('warn');
+    expect(map.get('webview.version')?.detail).toMatch(/bundle legacy/);
     // Informativo: lo que decide es el API y el WebView reales, ya evaluados.
     expect(map.get('device.versionConsistency')?.status).toBe('ok');
     expect(map.get('device.versionConsistency')?.detail).toMatch(/API level real es 25/);
@@ -62,6 +64,14 @@ describe('buildChecks', () => {
     const unknown = byId(buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: { ran: false }, paired: true }));
     expect(unknown.get('webview.version')?.status).toBe('warn');
     expect(unknown.get('webview.version')?.detail).toMatch(/No se pudo identificar/);
+  });
+
+  it('un WebView anterior a Chrome 52 no arranca el kiosko: no compatible', () => {
+    const snapshot = healthySnapshot({ webview: { packageName: 'com.android.webview', versionName: '50.0.2661.86', chromeMajor: 50, gmsPresent: false } });
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true });
+    expect(byId(checks).get('webview.version')?.status).toBe('fail');
+    expect(byId(checks).get('webview.version')?.detail).toMatch(/Chrome < 52/);
+    expect(computeVerdict(checks)).toBe('not_compatible');
   });
 
   it('memoria y almacenamiento por debajo del mínimo fallan', () => {

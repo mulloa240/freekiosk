@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `probe.serviceWorker` pasa de obligatorio a deseable (`warn`): el kiosko funciona sin Service Worker, solo pierde el modo offline. `probe.cssAspectRatio` y `probe.webgl` son informativos.
 
 ### Fixed
+- **Falso "No compatible" con WebView Chrome 52-60.** `webview.version` exigía Chrome 61, pero el bundle legacy del kiosk-client arranca desde Chrome 52 (se bajó por las X96 mini). Ahora el piso es 52 (`fail` por debajo) y entre 52 y 79 es `warn` (bundle legacy).
 - **Falso "No compatible: Falta serviceWorker".** La sonda de los diagnósticos automáticos y remotos se inyectaba en lo que mostrara el WebView del kiosko, incluida la pantalla de error (`about:blank`) o el visor de PDF (`file://`), sin contexto seguro. Ahora solo corre sobre el kiosko cargado por https; si no, usa un WebView oculto de respaldo montado en la raíz de la app (`DiagnosticProbeHost`). Si aun así corre sin contexto seguro, `serviceWorker` y `localStorage` quedan `skip` en vez de `fail`.
 
 ### Added
