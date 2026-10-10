@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
-## [1.2.27] - 2026-10-10 (Somelier)
+## [1.3.2] - 2026-10-10 (Catas)
 
 ### Changed
 - **El veredicto del auto-diagnóstico habla solo del equipo.** Los permisos, la red y el emparejamiento pendientes ya no bajan a "con limitaciones": quedan en `summary.setupIssues` y en el titular ("Compatible; pendiente de configuración: …"). Antes 38 de 39 equipos de la flota salían "con limitaciones", incluidas tablets nuevas, y el veredicto no distinguía nada.
@@ -25,6 +25,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Check `net.broker` (configuración): la sonda abre un WebSocket real al broker de eventos (URL del `/config.js` del kiosk-client) y reporta si conecta, en cuánto tiempo, o por qué no. Es lo que falla en la práctica ("websocket error") y antes no se medía.
+
+## [1.3.1] - 2026-10-10 (Catas)
+
+### Changed
+- **Dominio propio**: el kiosko carga `https://kiosko.landriuss.cl` y la app habla con `https://api.landriuss.cl` (emparejamiento, telemetría y auto-diagnóstico), en vez de los dominios `sslip.io`.
+- Las tablets ya emparejadas pasan solas al dominio nuevo: al leer la URL guardada, si usa el dominio viejo del kiosko (`https://` o el `http://` de antes del TLS) se reescribe al nuevo con el mismo token y se guarda así. No hay que volver a emparejar. Cualquier otra URL queda igual.
+
+## [1.3.0] - 2026-10-10 (Catas)
+
+### Changed
+- **La app pasa a llamarse Catas Kiosk**: nombre en el launcher, servicio de accesibilidad, pantalla de bienvenida, textos del auto-diagnóstico y de Ajustes (es/en). El `applicationId` sigue siendo `com.freekiosk`, así que las tablets se actualizan encima sin reinstalar ni volver a emparejar.
+- **Ícono nuevo**: isotipo Catas en blanco sobre verde bosque `#1F3D2B` en todas las densidades (adaptativo, cuadrado y redondo) y en el banner de Android TV.
+- CI: el artefacto del build se llama `catas-kiosk-apk` y los releases se titulan "Catas Kiosk vX.Y.Z". El archivo del release sigue siendo `FreeKiosk-v<versión>.apk`, que es el que busca el actualizador.
+- Cada release trae también una copia con nombre fijo, `CatasKiosk.apk`: el link `releases/latest/download/CatasKiosk.apk` baja siempre la última versión (lo usan la página "Descargar la app" del portal y la ruta corta `/app`).
+- README reescrito para el fork: instalación, mapa del código propio, cómo publicar una versión y cómo traer cambios de FreeKiosk.
 
 ## [1.2.26] - 2026-09-17 (Somelier)
 

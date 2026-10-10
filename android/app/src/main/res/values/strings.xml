@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Somelier Kiosk</string>
-    <string name="accessibility_service_description">Somelier Kiosk usa este servicio para enviar entradas de teclado y comandos de control remoto a las apps de este dispositivo. Es necesario para que el control remoto vía REST API funcione en modo app externa.</string>
+    <string name="app_name">Catas Kiosk</string>
+    <string name="accessibility_service_description">Catas Kiosk usa este servicio para enviar entradas de teclado y comandos de control remoto a las apps de este dispositivo. Es necesario para que el control remoto vía REST API funcione en modo app externa.</string>
     <string name="boot_loading">Iniciando kiosko…</string>
 </resources>

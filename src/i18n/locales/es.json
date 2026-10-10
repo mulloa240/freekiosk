@@ -400,7 +400,7 @@
       "bRemoveDeviceOwner": "Quitar Propietario del Dispositivo",
       "bExitKiosk": "Salir del Modo Kiosko",
       "tDiagnostics": "Auto-diagnóstico de compatibilidad",
-      "hDiagIntro": "Evalúa si este equipo puede correr el kiosko Somelier (Android y WebView reales, memoria, permisos, red) y envía el resultado al portal.",
+      "hDiagIntro": "Evalúa si este equipo puede correr el kiosko Catas (Android y WebView reales, memoria, permisos, red) y envía el resultado al portal.",
       "bRunDiag": "Ejecutar auto-diagnóstico",
       "bSendDiag": "Enviar al portal",
       "bCopyDiag": "Copiar JSON",

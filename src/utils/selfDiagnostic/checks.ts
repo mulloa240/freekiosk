@@ -361,7 +361,7 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
   // --- App (setup) ---
   checks.push(paired ? check('app.paired', 'ok', 'setup', true) : check('app.paired', 'warn', 'setup', false, 'Equipo sin emparejar (sin token de dispositivo)'));
   if (displayMode) {
-    checks.push(displayMode === 'webview' ? check('app.displayMode', 'ok', 'setup', displayMode) : check('app.displayMode', 'warn', 'setup', displayMode, 'El kiosko Somelier requiere el modo WebView'));
+    checks.push(displayMode === 'webview' ? check('app.displayMode', 'ok', 'setup', displayMode) : check('app.displayMode', 'warn', 'setup', displayMode, 'El kiosko Catas requiere el modo WebView'));
   }
 
   return checks;

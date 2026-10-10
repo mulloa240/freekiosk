@@ -5,6 +5,7 @@ import { DashboardTile } from '../types/dashboard';
 import { ManagedApp } from '../types/managedApps';
 import { MediaItem, MediaFitMode } from '../types/mediaPlayer';
 import { saveSecureApiKey, getSecureApiKey, clearSecureApiKey, clearSecureMqttPassword } from './secureStorage';
+import { migrateSomelierUrl } from '../config/somelier';
 
 const KEYS = {
   URL: '@kiosk_url',
@@ -176,6 +177,24 @@ const KEYS = {
   HTTP_BASIC_AUTH_USERNAME: '@kiosk_http_basic_auth_username',
 };
 
+// Plataforma Somelier: si la URL guardada usa un dominio viejo del
+// kiosk-client, se pasa al actual (con el mismo token) y se guarda así, para
+// que todo lo que la lea después ya vea la nueva. Si guardarla falla, se
+// devuelve igual la migrada: se reintenta en la próxima lectura.
+const migrateStoredUrl = async (url: string | null): Promise<string | null> => {
+  if (!url) return url;
+  const migrated = migrateSomelierUrl(url);
+  if (migrated !== url) {
+    try {
+      await AsyncStorage.setItem(KEYS.URL, migrated);
+      console.log('[Storage] URL del kiosko migrada al dominio actual');
+    } catch (error) {
+      console.error('Error saving migrated URL:', error);
+    }
+  }
+  return migrated;
+};
+
 export const StorageService = {
   //URL
   saveUrl: async (url: string): Promise<void> => {
@@ -189,7 +208,7 @@ export const StorageService = {
   getUrl: async (): Promise<string | null> => {
     try {
       const url = await AsyncStorage.getItem(KEYS.URL);
-      return url;
+      return await migrateStoredUrl(url);
     } catch (error) {
       console.error('Error getting URL:', error);
       return null;
@@ -2742,6 +2761,7 @@ export const StorageService = {
       for (const [key, value] of pairs) {
         map.set(key, value);
       }
+      map.set(KEYS.URL, await migrateStoredUrl(map.get(KEYS.URL) ?? null));
       return map;
     } catch (error) {
       console.error('Error batch loading settings:', error);
