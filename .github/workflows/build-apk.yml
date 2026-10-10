@@ -1,4 +1,4 @@
-# Compila el APK del fork Somelier Kiosk.
+# Compila el APK del fork Catas Kiosk (antes Somelier Kiosk).
 #
 # El sandbox de desarrollo no puede descargar el Android SDK (dl.google.com
 # esta fuera de su politica de red), asi que el APK se compila aca, en los
@@ -66,6 +66,6 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: somelier-kiosk-apk
+          name: catas-kiosk-apk
           path: android/app/build/outputs/apk/release/*.apk
           retention-days: 30
