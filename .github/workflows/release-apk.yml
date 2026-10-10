@@ -72,11 +72,20 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
+      # Dos copias del mismo APK:
+      # - FreeKiosk-v<version>.apk: el nombre que espera el UpdateModule de la
+      #   app (auto-update de las tablets). No cambiarlo.
+      # - CatasKiosk.apk: nombre fijo, para que el link
+      #   releases/latest/download/CatasKiosk.apk baje siempre la ultima
+      #   version. Es el que usan la pagina "Descargar app" del portal y la
+      #   ruta corta /app.
       - name: Renombrar APK con el nombre que espera el updater
         run: |
           mkdir -p release-out
           cp android/app/build/outputs/apk/release/*.apk \
              "release-out/FreeKiosk-v${{ steps.version.outputs.value }}.apk"
+          cp android/app/build/outputs/apk/release/*.apk \
+             "release-out/CatasKiosk.apk"
 
       - name: Publicar GitHub Release con el APK
         uses: softprops/action-gh-release@v2

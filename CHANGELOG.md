@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **La app pasa a llamarse Catas Kiosk**: nombre en el launcher, servicio de accesibilidad, pantalla de bienvenida, textos del auto-diagnóstico y de Ajustes (es/en). El `applicationId` sigue siendo `com.freekiosk`, así que las tablets se actualizan encima sin reinstalar ni volver a emparejar.
 - **Ícono nuevo**: isotipo Catas en blanco sobre verde bosque `#1F3D2B` en todas las densidades (adaptativo, cuadrado y redondo) y en el banner de Android TV.
 - CI: el artefacto del build se llama `catas-kiosk-apk` y los releases se titulan "Catas Kiosk vX.Y.Z". El archivo del release sigue siendo `FreeKiosk-v<versión>.apk`, que es el que busca el actualizador.
+- Cada release trae también una copia con nombre fijo, `CatasKiosk.apk`: el link `releases/latest/download/CatasKiosk.apk` baja siempre la última versión (lo usan la página "Descargar la app" del portal y la ruta corta `/app`).
 - README reescrito para el fork: instalación, mapa del código propio, cómo publicar una versión y cómo traer cambios de FreeKiosk.
 
 ## [1.2.26] - 2026-09-17 (Somelier)

@@ -24,7 +24,12 @@ La parte web (portal de administración, kiosk-client, app del participante y AP
 
 ## 📦 Instalar en una tablet
 
-1. Descargá `FreeKiosk-vX.Y.Z.apk` desde el [último release](https://github.com/mulloa240/freekiosk/releases/latest) y instalalo (Android 8.0 o superior).
+1. Descargá la app e instalala (Android 8.0 o superior). Hay tres formas, todas bajan la última versión:
+   - desde la tablet, abrí en el navegador la dirección corta del portal: **`admin.somelier.mulloa240.dev/app`**;
+   - en el portal, **Flota → Emparejamiento → Descargar la app**, con un QR para escanear desde la tablet;
+   - el link directo: [`releases/latest/download/CatasKiosk.apk`](https://github.com/mulloa240/freekiosk/releases/latest/download/CatasKiosk.apk).
+
+   El navegador de la tablet va a pedir permiso para "instalar apps desconocidas" la primera vez.
 2. Para el bloqueo completo, dejá la app como Device Owner con el equipo recién reseteado:
 
    ```bash
@@ -35,7 +40,7 @@ La parte web (portal de administración, kiosk-client, app del participante y AP
 
 Una vez instalada, cada tablet revisa los releases de este repo al arrancar y se actualiza sola cuando hay una versión más nueva. Con Device Owner la instalación es silenciosa; sin Device Owner, Android muestra el diálogo de instalación estándar.
 
-> El archivo del release se llama `FreeKiosk-v<versión>.apk` a propósito: es el nombre que busca el actualizador de la app. El `applicationId` sigue siendo `com.freekiosk`, para que las tablets ya instaladas se actualicen encima sin reinstalar ni volver a emparejar.
+> Cada release trae el mismo APK con dos nombres. `CatasKiosk.apk` es fijo, para el link de descarga. `FreeKiosk-v<versión>.apk` es el que busca el actualizador de la app, así que no hay que cambiarlo. El `applicationId` sigue siendo `com.freekiosk`, para que las tablets ya instaladas se actualicen encima sin reinstalar ni volver a emparejar.
 
 ## 🧭 Dónde está el código propio del fork
 
@@ -97,7 +102,7 @@ La marca visible es Catas, pero varios identificadores internos mantienen el nom
    git tag v1.3.0 && git push origin v1.3.0
    ```
 
-   El workflow **Release APK** compila y publica el release "Catas Kiosk v1.3.0" con `FreeKiosk-v1.3.0.apk`. Desde ese momento las tablets lo detectan solas.
+   El workflow **Release APK** compila y publica el release "Catas Kiosk v1.3.0" con `FreeKiosk-v1.3.0.apk` y `CatasKiosk.apk`. Desde ese momento las tablets lo detectan solas y el link de descarga ya baja la versión nueva.
 
 > El `versionName` del APK tiene que coincidir con el tag. Si no, la tablet instala la versión nueva pero sigue reportando la vieja, y vuelve a ofrecer la actualización en cada arranque.
 
