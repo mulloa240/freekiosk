@@ -25,7 +25,7 @@ La parte web (portal de administración, kiosk-client, app del participante y AP
 ## 📦 Instalar en una tablet
 
 1. Descargá la app e instalala (Android 8.0 o superior). Hay tres formas, todas bajan la última versión:
-   - desde la tablet, abrí en el navegador la dirección corta del portal: **`admin.somelier.mulloa240.dev/app`**;
+   - desde la tablet, abrí en el navegador **la dirección del portal seguida de `/app`** (hoy `somelier-portaladmin-…sslip.io/app`). El panel "Descargar la app" del portal muestra la dirección exacta, porque la arma con el dominio desde el que se abrió el portal;
    - en el portal, **Flota → Emparejamiento → Descargar la app**, con un QR para escanear desde la tablet;
    - el link directo: [`releases/latest/download/CatasKiosk.apk`](https://github.com/mulloa240/freekiosk/releases/latest/download/CatasKiosk.apk).
 
