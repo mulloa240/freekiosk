@@ -1,6 +1,13 @@
 import { buildChecks, versionInconsistencies, parseKernel } from '../../src/utils/selfDiagnostic/checks';
 import { buildNetworkSection } from '../../src/utils/selfDiagnostic/network';
-import { FULL_PROBE, fakeAndroid13BoxSnapshot, healthySnapshot } from '../../src/utils/selfDiagnostic/__fixtures__/snapshots';
+import { computeVerdict } from '../../src/utils/selfDiagnostic/verdict';
+import {
+  FULL_PROBE,
+  fakeAndroid13BoxSnapshot,
+  healthySnapshot,
+  samsungUpgradedSnapshot,
+  sanciTvBoxSnapshot,
+} from '../../src/utils/selfDiagnostic/__fixtures__/snapshots';
 
 const byId = (checks: ReturnType<typeof buildChecks>) => new Map(checks.map((c) => [c.id, c]));
 
@@ -13,18 +20,22 @@ describe('buildChecks', () => {
     expect(checks.length).toBeGreaterThan(20);
   });
 
-  it('una caja "Android 13" falseada sobre 7.1 con WebView 58 falla por el WebView y avisa por la versión', () => {
+  it('una caja "Android 13" falseada sobre 7.1 con WebView 58: corre el bundle legacy; la versión falsa queda informada', () => {
     const snapshot = fakeAndroid13BoxSnapshot();
     const network = buildNetworkSection(snapshot);
     const map = byId(buildChecks({ snapshot, network, probe: { ran: false }, paired: false, displayMode: 'webview' }));
 
-    expect(map.get('webview.version')?.status).toBe('fail');
-    expect(map.get('device.versionConsistency')?.status).toBe('warn');
+    // El bundle legacy del kiosko arranca desde Chrome 52.
+    expect(map.get('webview.version')?.status).toBe('warn');
+    expect(map.get('webview.version')?.detail).toMatch(/bundle legacy/);
+    // Informativo: lo que decide es el API y el WebView reales, ya evaluados.
+    expect(map.get('device.versionConsistency')?.status).toBe('ok');
     expect(map.get('device.versionConsistency')?.detail).toMatch(/API level real es 25/);
     expect(map.get('device.versionConsistency')?.detail).toMatch(/kernel 3.14/);
     expect(map.get('android.api')?.status).toBe('warn');
     expect(map.get('device.abi')?.status).toBe('warn');
-    expect(map.get('device.touch')?.status).toBe('warn');
+    // TV con control remoto: no tener táctil es lo esperado.
+    expect(map.get('device.touch')?.status).toBe('ok');
     expect(map.get('memory.total')?.status).toBe('warn');
     expect(map.get('webview.updatable')?.status).toBe('warn');
     expect(map.get('probe.run')?.status).toBe('skip');
@@ -55,6 +66,14 @@ describe('buildChecks', () => {
     expect(unknown.get('webview.version')?.detail).toMatch(/No se pudo identificar/);
   });
 
+  it('un WebView anterior a Chrome 52 no arranca el kiosko: no compatible', () => {
+    const snapshot = healthySnapshot({ webview: { packageName: 'com.android.webview', versionName: '50.0.2661.86', chromeMajor: 50, gmsPresent: false } });
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true });
+    expect(byId(checks).get('webview.version')?.status).toBe('fail');
+    expect(byId(checks).get('webview.version')?.detail).toMatch(/Chrome < 52/);
+    expect(computeVerdict(checks)).toBe('not_compatible');
+  });
+
   it('memoria y almacenamiento por debajo del mínimo fallan', () => {
     const snapshot = healthySnapshot({
       memory: { totalMB: 512, availableMB: 100, lowMemory: true, memoryClassMB: 96, largeMemoryClassMB: 128 },
@@ -80,6 +99,87 @@ describe('buildChecks', () => {
     expect(status(mk(10 * 60 * 1000))).toBe('warn');
     expect(status(mk(2 * 24 * 3600 * 1000))).toBe('fail');
   });
+
+  it('Samsung SM-T515 actualizada de 9 a 11 con kernel 4.4: compatible, sin falso aviso de kernel', () => {
+    const snapshot = samsungUpgradedSnapshot();
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true, displayMode: 'webview' });
+    const map = byId(checks);
+    expect(map.get('device.versionConsistency')?.detail).toBeUndefined();
+    expect(computeVerdict(checks)).toBe('compatible');
+  });
+
+  it('TV box Sanci SC-TV114 ("15.0" sobre API 29, WebView 101): compatible; la versión falsa queda a la vista', () => {
+    const snapshot = sanciTvBoxSnapshot();
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true, displayMode: 'webview' });
+    const map = byId(checks);
+    expect(map.get('device.versionConsistency')?.status).toBe('ok');
+    expect(map.get('device.versionConsistency')?.detail).toMatch(/declara Android 15 pero el API level real es 29/);
+    expect(map.get('device.touch')?.status).toBe('ok');
+    expect(map.get('webview.version')?.status).toBe('ok');
+    // Device Owner y superposición pendientes: configuración, no compatibilidad.
+    expect(map.get('perm.deviceOwner')?.status).toBe('warn');
+    expect(computeVerdict(checks)).toBe('compatible');
+  });
+
+  it('sin táctil y sin control remoto sí avisa', () => {
+    const snapshot = healthySnapshot({ device: { ...healthySnapshot().device, touchscreen: false, isTv: false, hasDpad: false } });
+    const map = byId(buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true }));
+    expect(map.get('device.touch')?.status).toBe('warn');
+  });
+
+  it('sonda fuera del kiosko (about:blank): serviceWorker y localStorage quedan sin medir, no "No compatible"', () => {
+    const snapshot = healthySnapshot();
+    const probe = {
+      ran: true,
+      origin: 'null',
+      results: { ...FULL_PROBE.results, secureContext: false, serviceWorker: false, localStorage: false },
+    };
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe, paired: true, displayMode: 'webview' });
+    const map = byId(checks);
+    expect(map.get('probe.serviceWorker')?.status).toBe('skip');
+    expect(map.get('probe.localStorage')?.status).toBe('skip');
+    expect(map.get('probe.localStorage')?.detail).toMatch(/fuera del kiosko/);
+    expect(computeVerdict(checks)).toBe('compatible');
+  });
+
+  it('sin Service Worker en el kiosko: aviso (sin modo offline), no incompatibilidad', () => {
+    const snapshot = healthySnapshot();
+    const probe = { ...FULL_PROBE, results: { ...FULL_PROBE.results, serviceWorker: false } };
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe, paired: true, displayMode: 'webview' });
+    expect(byId(checks).get('probe.serviceWorker')?.status).toBe('warn');
+    expect(computeVerdict(checks)).toBe('compatible_with_limitations');
+  });
+
+  it('sin aspect-ratio ni WebGL: informativo, no baja el veredicto', () => {
+    const snapshot = healthySnapshot();
+    const probe = { ...FULL_PROBE, results: { ...FULL_PROBE.results, cssAspectRatio: false, webgl: false } };
+    const checks = buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe, paired: true, displayMode: 'webview' });
+    const map = byId(checks);
+    expect(map.get('probe.cssAspectRatio')?.status).toBe('ok');
+    expect(map.get('probe.cssAspectRatio')?.detail).toMatch(/informativo/);
+    expect(computeVerdict(checks)).toBe('compatible');
+  });
+
+  it('WebSocket al broker: ok, lento, error, sin respuesta o sin medir', () => {
+    const snapshot = healthySnapshot();
+    const broker = (results: Record<string, unknown>) =>
+      byId(
+        buildChecks({
+          snapshot,
+          network: buildNetworkSection(snapshot),
+          probe: { ...FULL_PROBE, results: { ...FULL_PROBE.results, ...results } },
+          paired: true,
+        }),
+      ).get('net.broker');
+    expect(broker({ brokerWs: 'ok', brokerWsMs: 200 })?.status).toBe('ok');
+    expect(broker({ brokerWs: 'ok', brokerWsMs: 5000 })?.status).toBe('warn');
+    const error = broker({ brokerWs: 'error', brokerWsDetail: 'close 1006' });
+    expect(error?.status).toBe('fail');
+    expect(error?.impact).toBe('setup');
+    expect(error?.detail).toMatch(/close 1006/);
+    expect(broker({ brokerWs: 'timeout' })?.status).toBe('fail');
+    expect(broker({ brokerWs: 'skipped' })?.status).toBe('skip');
+  });
 });
 
 describe('versionInconsistencies', () => {
@@ -91,6 +191,21 @@ describe('versionInconsistencies', () => {
   it('detecta build.prop falseado por API, kernel y WebView', () => {
     const reasons = versionInconsistencies({ androidVersion: '13', apiLevel: 28, kernel: '4.9.113' }, { chromeMajor: 69 });
     expect(reasons).toHaveLength(3);
+  });
+
+  it('el kernel se mide contra la versión de fábrica si el equipo fue actualizado', () => {
+    // Salió con Android 9 (API 28): kernel 4.4 es válido aunque hoy corra 11.
+    expect(
+      versionInconsistencies({ androidVersion: '11', apiLevel: 30, firstApiLevel: 28, kernel: '4.4.177' }, { chromeMajor: 151 }),
+    ).toEqual([]);
+    // Sin first_api_level se sigue usando la declarada.
+    expect(versionInconsistencies({ androidVersion: '11', apiLevel: 30, kernel: '4.4.177' }, { chromeMajor: 151 })).toEqual([
+      'kernel 4.4 es demasiado viejo para Android 11',
+    ]);
+    // Una caja que falsea la versión no se salva: su first_api_level no es menor.
+    expect(
+      versionInconsistencies({ androidVersion: '13', apiLevel: 28, firstApiLevel: 28, kernel: '4.9.113' }, { chromeMajor: 69 }),
+    ).toHaveLength(3);
   });
 
   it('parseKernel tolera formatos raros', () => {

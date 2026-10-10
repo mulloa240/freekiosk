@@ -128,6 +128,10 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const webViewRef = useRef<WebView>(null);
+  // Página que muestra el WebView ahora y si está en la pantalla de error: la
+  // sonda del auto-diagnóstico solo corre sobre el kiosko cargado.
+  const pageUrlRef = useRef<string | null>(null);
+  const errorRef = useRef(false);
 
   // Auto-diagnóstico (Somelier): mientras este WebView está montado, es quien
   // ejecuta la sonda de capacidades JS (inyección) para los diagnósticos
@@ -136,7 +140,11 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   useEffect(() => {
     const runner: ProbeRunner = (script) => {
       const wv = webViewRef.current;
-      if (!wv) return false;
+      // En la pantalla de error (about:blank) o en el visor de PDF (file://)
+      // no hay contexto seguro: la sonda daría "Falta serviceWorker" en un
+      // WebView que sí lo tiene. Sin este runner, el probeBus usa el WebView
+      // oculto de respaldo (DiagnosticProbeHost).
+      if (!wv || errorRef.current || !/^https:\/\//i.test(pageUrlRef.current ?? '')) return false;
       wv.injectJavaScript(script);
       return true;
     };
@@ -150,6 +158,9 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
   const containerViewRef = useRef<View>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  useEffect(() => {
+    errorRef.current = error;
+  }, [error]);
   const [pageLoaded, setPageLoaded] = useState<boolean>(false);
   const [blockedUrlMessage, setBlockedUrlMessage] = useState<string | null>(null);
   // App version for the error-overlay footer — read from the installed APK (build.gradle)
@@ -1245,6 +1256,7 @@ const WebViewComponent = forwardRef<WebViewComponentRef, WebViewComponentProps>(
         }}
 
         onNavigationStateChange={(navState) => {
+          if (navState.url) pageUrlRef.current = navState.url;
           // Track web navigation state (for back button and dashboard nav)
           if (onNavigationStateChange) {
             onNavigationStateChange({

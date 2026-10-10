@@ -7,10 +7,17 @@ import type { CheckImpact, CheckStatus, DiagnosticCheck, NativeDiagnosticsSnapsh
  */
 
 export const THRESHOLDS = {
-  // Piso del bundle legacy del kiosk-client (plugin-legacy: chrome >= 61) y
-  // piso del bundle moderno (sintaxis ES2020: optional chaining).
-  chromeLegacyMin: 61,
+  // Piso del bundle legacy del kiosk-client (plugin-legacy `targets`:
+  // chrome >= 52 desde que las X96 mini no arrancaban con 61). Por debajo no
+  // hay bundle que parsee. Antes esto decía 61 y un WebView 52-60 salía "No
+  // compatible" aunque el kiosko arrancara.
+  chromeLegacyMin: 52,
+  // Desde acá el WebView es "ok": sintaxis ES2020 (optional chaining). Entre
+  // el piso y esto el kiosko anda, con el bundle legacy.
   chromeModernMin: 80,
+  // Lo mínimo que se puede inferir de la sonda sin User-Agent: `noModule`
+  // existe desde Chrome 61.
+  chromeNoModule: 61,
   ramOkMB: 2048,
   ramMinMB: 768,
   heapOkMB: 192,
@@ -63,6 +70,14 @@ function check(
   return c;
 }
 
+/** Versión mayor de Android para un API level (inverso de SDK_BY_ANDROID). */
+function androidForSdk(sdk: number): number | undefined {
+  for (const [android, sdks] of Object.entries(SDK_BY_ANDROID)) {
+    if (sdks.includes(sdk)) return Number(android);
+  }
+  return undefined;
+}
+
 export function parseKernel(kernel: string | undefined): [number, number] | undefined {
   if (!kernel) return undefined;
   const m = /^(\d+)\.(\d+)/.exec(kernel.trim());
@@ -88,10 +103,19 @@ export function versionInconsistencies(
     }
   }
   const kernel = parseKernel(device.kernel);
-  if (Number.isFinite(declared) && kernel) {
-    const rule = MIN_KERNEL_BY_ANDROID.find((r) => declared >= r.android);
+  // El kernel mínimo es el de la versión con la que el equipo SALIÓ de
+  // fábrica: un equipo actualizado conserva su kernel (Samsung SM-T510/T515
+  // salió con Android 9 y kernel 4.4, y Samsung la llevó a Android 11). Solo
+  // si first_api_level dice que hubo actualización se usa esa versión; si
+  // no, la declarada, que es la que delata a las cajas con build.prop falso.
+  const upgraded =
+    typeof device.firstApiLevel === 'number' && typeof sdk === 'number' && device.firstApiLevel < sdk;
+  const launched = upgraded ? androidForSdk(device.firstApiLevel as number) : undefined;
+  const kernelBase = launched ?? declared;
+  if (Number.isFinite(kernelBase) && kernel) {
+    const rule = MIN_KERNEL_BY_ANDROID.find((r) => kernelBase >= r.android);
     if (rule && (kernel[0] < rule.kernel[0] || (kernel[0] === rule.kernel[0] && kernel[1] < rule.kernel[1]))) {
-      reasons.push(`kernel ${kernel[0]}.${kernel[1]} es demasiado viejo para Android ${declared}`);
+      reasons.push(`kernel ${kernel[0]}.${kernel[1]} es demasiado viejo para Android ${kernelBase}`);
     }
   }
   if (Number.isFinite(declared) && declared >= 10 && typeof webview.chromeMajor === 'number' && webview.chromeMajor < 70) {
@@ -101,6 +125,36 @@ export function versionInconsistencies(
     reasons.push(`first_api_level ${device.firstApiLevel} mayor que el API level ${sdk}`);
   }
   return reasons;
+}
+
+/**
+ * WebSocket real al broker de eventos, abierto por la sonda desde el WebView.
+ * Es por donde le llegan al kiosko los cambios de contenido; si no abre, el
+ * equipo queda mostrando lo último que tenía ("websocket error" en la
+ * telemetría). Es de red/configuración del local, no del equipo: `setup`.
+ */
+function brokerCheck(results: Record<string, unknown>): DiagnosticCheck {
+  const status = results.brokerWs;
+  const ms = typeof results.brokerWsMs === 'number' ? results.brokerWsMs : undefined;
+  const extra = typeof results.brokerWsDetail === 'string' ? ` · ${results.brokerWsDetail}` : '';
+  if (status === 'ok') {
+    return typeof ms === 'number' && ms > THRESHOLDS.slowEndpointMs
+      ? check('net.broker', 'warn', 'setup', ms, 'El broker de eventos responde lento por WebSocket')
+      : check('net.broker', 'ok', 'setup', ms ?? true);
+  }
+  if (status === 'timeout') {
+    return check('net.broker', 'fail', 'setup', 'timeout', 'El broker de eventos no respondió por WebSocket: el kiosko no recibirá cambios en vivo');
+  }
+  if (status === 'error') {
+    return check(
+      'net.broker',
+      'fail',
+      'setup',
+      'error',
+      `No se pudo abrir el WebSocket al broker de eventos (WiFi del local, proxy, firewall o TLS): el kiosko no recibirá cambios en vivo${extra}`,
+    );
+  }
+  return check('net.broker', 'skip', 'setup');
 }
 
 export interface BuildChecksInput {
@@ -129,11 +183,16 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
     } else checks.push(check('android.api', 'fail', 'compat', api, 'Android anterior a 7.0 no es soportado'));
   } else checks.push(check('android.api', 'skip', 'compat'));
 
+  // Informativo: una caja con build.prop falso (declara Android 15 y es
+  // API 29) corre el kiosko igual, porque todo se decide con lo que no se
+  // puede falsear (API real, WebView real, ya evaluados en sus propios
+  // checks). Se muestra para saber qué equipo es de verdad, sin bajar el
+  // veredicto; el portal lo marca con `device.versionConsistent`.
   const inconsistencies = versionInconsistencies(device, webview);
   checks.push(
     inconsistencies.length === 0
       ? check('device.versionConsistency', 'ok', 'compat', device.androidVersion)
-      : check('device.versionConsistency', 'warn', 'compat', device.androidVersion, `Versión de Android declarada no coincide con el sistema real: ${inconsistencies.join('; ')}`),
+      : check('device.versionConsistency', 'ok', 'compat', device.androidVersion, `Informativo: la versión de Android declarada no coincide con el sistema real (${inconsistencies.join('; ')}); el kiosko usa la real`),
   );
 
   // --- Hardware ---
@@ -143,8 +202,14 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
   else if (abis.some((a) => PACKAGED_ABIS.includes(a))) checks.push(check('device.abi', 'warn', 'compat', abis.join(','), 'Solo 32 bits (armeabi-v7a)'));
   else checks.push(check('device.abi', 'fail', 'compat', abis.join(','), 'Ninguna ABI del APK es compatible con este equipo'));
 
+  // Un TV box sin táctil es lo esperado para un cartel: se maneja con el
+  // control. Solo avisa si tampoco hay control (ni TV ni D-pad).
   if (device.touchscreen === false) {
-    checks.push(check('device.touch', 'warn', 'compat', false, 'Sin pantalla táctil: el manejo es por control remoto / D-pad'));
+    checks.push(
+      device.isTv || device.hasDpad
+        ? check('device.touch', 'ok', 'compat', false, 'Sin pantalla táctil: se maneja con control remoto (TV)')
+        : check('device.touch', 'warn', 'compat', false, 'Sin pantalla táctil ni control remoto detectado'),
+    );
   } else checks.push(check('device.touch', 'ok', 'compat', true));
 
   const minSide = device.screen?.w && device.screen?.h ? Math.min(device.screen.w, device.screen.h) : undefined;
@@ -183,7 +248,7 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
   if (typeof chrome !== 'number') {
     // Sin UA por defecto: se infiere del probe (noModule ⇒ >= 61, optional chaining ⇒ >= 80).
     if (results.optionalChaining === true) chrome = T.chromeModernMin;
-    else if (results.esModules === true) chrome = T.chromeLegacyMin;
+    else if (results.esModules === true) chrome = T.chromeNoModule;
   }
   const wvLabel = webview.packageName ? `${webview.packageName} ${webview.versionName ?? ''}`.trim() : undefined;
   if (typeof chrome === 'number') {
@@ -202,26 +267,45 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
     checks.push(check('probe.run', 'skip', 'compat', false, 'La sonda no pudo ejecutarse en el WebView'));
   } else {
     checks.push(check('probe.run', 'ok', 'compat', true));
+    // Fuera de un contexto seguro (about:blank tras un error, visor file://)
+    // el WebView esconde serviceWorker y localStorage aunque los soporte: no
+    // se puede medir, y no es culpa del equipo.
+    const insecure =
+      results.secureContext === false || (typeof probe.origin === 'string' && !probe.origin.startsWith('https:'));
+    const needsSecure = new Set(['serviceWorker', 'localStorage']);
+    const unmeasurable = (id: string) =>
+      check(id, 'skip', 'compat', undefined, `La sonda corrió fuera del kiosko (${probe.origin ?? 'origen desconocido'}): no se pudo medir`);
+
     const must: Array<[string, string]> = [
-      ['serviceWorker', 'probe.serviceWorker'],
       ['fetch', 'probe.fetch'],
       ['webSocket', 'probe.webSocket'],
       ['worker', 'probe.workers'],
       ['localStorage', 'probe.localStorage'],
     ];
     for (const [key, id] of must) {
-      checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'fail', 'compat', false, `Falta ${key}`));
+      if (insecure && needsSecure.has(key)) checks.push(unmeasurable(id));
+      else checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'fail', 'compat', false, `Falta ${key}`));
     }
     const nice: Array<[string, string, string]> = [
+      // El kiosko funciona sin Service Worker (lo chequea antes de usarlo);
+      // solo pierde el modo offline y la caché de medios en disco.
+      ['serviceWorker', 'probe.serviceWorker', 'Sin Service Worker: el kiosko funciona, pero sin modo offline'],
       ['optionalChaining', 'probe.modernSyntax', 'Sin sintaxis ES2020: se usa el bundle legacy'],
       ['intersectionObserver', 'probe.intersectionObserver', 'Sin IntersectionObserver: el visor de PDF no virtualiza páginas'],
       ['cssGrid', 'probe.cssGrid', 'Sin CSS grid: layouts de página degradados'],
-      ['cssAspectRatio', 'probe.cssAspectRatio', 'Sin aspect-ratio (informativo)'],
-      ['webgl', 'probe.webgl', 'Sin WebGL (informativo)'],
       ['videoH264', 'probe.videoH264', 'El WebView no reporta soporte H.264'],
     ];
     for (const [key, id, why] of nice) {
-      checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'warn', 'compat', false, why));
+      if (insecure && needsSecure.has(key)) checks.push(unmeasurable(id));
+      else checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'warn', 'compat', false, why));
+    }
+    // Informativos: se muestran, pero el kiosko no los necesita.
+    const info: Array<[string, string, string]> = [
+      ['cssAspectRatio', 'probe.cssAspectRatio', 'Sin aspect-ratio (informativo)'],
+      ['webgl', 'probe.webgl', 'Sin WebGL (informativo)'],
+    ];
+    for (const [key, id, why] of info) {
+      checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'ok', 'compat', false, why));
     }
   }
 
@@ -249,6 +333,7 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
   };
   checks.push(endpoint('net.kioskClient', network.kioskClient));
   checks.push(endpoint('net.adminApi', network.adminApi));
+  checks.push(brokerCheck(results));
 
   if (network.clockBeforeBuild) {
     checks.push(check('net.clock', 'fail', 'setup', 'before-build', 'El reloj del equipo es anterior a la fecha del build: TLS fallará hasta que sincronice la hora'));

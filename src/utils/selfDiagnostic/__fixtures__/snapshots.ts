@@ -71,10 +71,63 @@ export function fakeAndroid13BoxSnapshot(): NativeDiagnosticsSnapshot {
   };
 }
 
+/**
+ * Samsung SM-T515 de la flota: salió con Android 9 (first_api_level 28) y
+ * Samsung la actualizó a 11 sobre el mismo kernel 4.4. No es un build.prop
+ * falso, y antes se marcaba como tal.
+ */
+export function samsungUpgradedSnapshot(): NativeDiagnosticsSnapshot {
+  const base = healthySnapshot();
+  return {
+    ...base,
+    device: {
+      ...base.device,
+      manufacturer: 'samsung',
+      model: 'SM-T515',
+      androidVersion: '11',
+      apiLevel: 30,
+      firstApiLevel: 28,
+      kernel: '4.4.177-21651563',
+    },
+    webview: { packageName: 'com.google.android.webview', versionName: '151.0.7922.199', chromeMajor: 151, source: 'current', gmsPresent: true },
+  };
+}
+
+/**
+ * TV box Sanci SC-TV114 de la flota: declara Android "15.0" sobre un Android
+ * 10 real (API 29), WebView AOSP 101, sin táctil, con control remoto.
+ */
+export function sanciTvBoxSnapshot(): NativeDiagnosticsSnapshot {
+  const base = healthySnapshot();
+  return {
+    ...base,
+    device: {
+      ...base.device,
+      manufacturer: 'Sanci',
+      model: 'SC-TV114',
+      androidVersion: '15.0',
+      apiLevel: 29,
+      firstApiLevel: 29,
+      kernel: '4.9.170',
+      abis: ['arm64-v8a', 'armeabi-v7a'],
+      isTv: true,
+      touchscreen: false,
+      hasDpad: true,
+      screen: { w: 1920, h: 1080, dpi: 320, density: 2 },
+    },
+    webview: { packageName: 'com.android.webview', versionName: '101.0.4951.61', chromeMajor: 101, source: 'current', gmsPresent: true },
+    permissions: { ...base.permissions, deviceOwner: false, overlay: false },
+  };
+}
+
 export const FULL_PROBE = {
   ran: true,
   ms: 12,
+  origin: 'https://kiosko.example',
   results: {
+    secureContext: true,
+    brokerWs: 'ok',
+    brokerWsMs: 180,
     esModules: true,
     optionalChaining: true,
     nullishCoalescing: true,

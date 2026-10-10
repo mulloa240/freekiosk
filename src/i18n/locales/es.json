@@ -458,6 +458,7 @@
         "net.type": "Tipo de red",
         "net.kioskClient": "Acceso al kiosko (ms)",
         "net.adminApi": "Acceso a la API (ms)",
+        "net.broker": "WebSocket al broker de eventos (ms)",
         "net.clock": "Reloj del equipo (desfase s)",
         "perm.deviceOwner": "Device Owner",
         "perm.lockTask": "Lock task permitido",
