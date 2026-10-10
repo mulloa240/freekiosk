@@ -1,129 +1,153 @@
 <div align="center">
-  <h1>FreeKiosk</h1>
-  <p><strong>Free open-source kiosk mode for Android tablets</strong></p>
-  <p>Alternative to Fully Kiosk Browser</p>
-  
+  <h1>Catas Kiosk</h1>
+  <p><strong>La app Android de las tablets de Catas</strong></p>
+  <p>Fork de <a href="https://github.com/rushb-fr/freekiosk">FreeKiosk</a> adaptado a la plataforma Catas</p>
+
   <p>
-    <a href="https://freekiosk.app">Website</a> •
-    <a href="#-install-in-60-seconds">Installation</a> •
-    <a href="docs/faq.md">FAQ</a> •
-    <a href="#-key-capabilities">Features</a>
+    <a href="https://github.com/mulloa240/freekiosk/releases/latest">Última versión</a> •
+    <a href="#-dónde-está-el-código-propio-del-fork">Código del fork</a> •
+    <a href="#-publicar-una-versión">Publicar una versión</a> •
+    <a href="https://github.com/mulloa240/somelier">Plataforma Catas (somelier)</a>
   </p>
-  
+
   <p>
-    <img src="https://img.shields.io/badge/Version-1.2.20-blue.svg" alt="Version 1.2.20">
-    <a href="https://github.com/rushb-fr/freekiosk/releases"><img src="https://img.shields.io/github/downloads/rushb-fr/freekiosk/total.svg" alt="Downloads"></a>
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
+    <a href="https://github.com/mulloa240/freekiosk/releases/latest"><img src="https://img.shields.io/github/v/release/mulloa240/freekiosk?label=versi%C3%B3n" alt="Versión"></a>
+    <a href="https://github.com/mulloa240/freekiosk/actions/workflows/build-apk.yml"><img src="https://github.com/mulloa240/freekiosk/actions/workflows/build-apk.yml/badge.svg" alt="Build APK"></a>
     <img src="https://img.shields.io/badge/Android-8.0%2B-green.svg" alt="Android 8.0+">
-    <img src="https://img.shields.io/badge/Device%20Owner-Supported-brightgreen" alt="Device Owner">
-    <img src="https://img.shields.io/badge/REST%20API-40%2B%20Endpoints-orange" alt="REST API">
-    <img src="https://img.shields.io/badge/MQTT-Home%20Assistant%20Discovery-41BDF5" alt="MQTT">
+    <img src="https://img.shields.io/badge/Licencia-MIT-blue.svg" alt="Licencia MIT">
   </p>
-  
-  <p><strong>A <a href="https://rushb.fr">Rushb</a> Project</strong></p>
 </div>
 
-FreeKiosk is an open-source kiosk platform for Android tablets, built for teams that want **full control without license costs**.
+Catas Kiosk es el *shell* nativo que corre en cada tablet de la flota. Bloquea el equipo en modo kiosko (Device Owner), se empareja con el portal de Catas y carga el **kiosk-client** en un WebView con el token del dispositivo. Además reporta telemetría y un auto-diagnóstico de compatibilidad al **admin-api**, y se actualiza sola desde los releases de este repositorio.
 
-Instead of burying everything in one long page, this README gives you the essentials and points to complete docs in `docs/`.
+La parte web (portal de administración, kiosk-client, app del participante y APIs) vive en el monorepo [mulloa240/somelier](https://github.com/mulloa240/somelier). Este repo es solo la app Android.
 
-### Why teams choose it
+## 📦 Instalar en una tablet
 
-- ✅ Free and MIT licensed
-- ✅ Device Owner support for true lockdown
-- ✅ Works in WebView mode or External App mode
-- ✅ Native REST API and MQTT integration
-- ✅ Headless ADB provisioning for mass rollout
-- ✅ Privacy-first: no mandatory tracking layer
+1. Descargá la app e instalala (Android 8.0 o superior). Hay tres formas, todas bajan la última versión:
+   - desde la tablet, abrí en el navegador la dirección corta del portal: **`admin.somelier.mulloa240.dev/app`**;
+   - en el portal, **Flota → Emparejamiento → Descargar la app**, con un QR para escanear desde la tablet;
+   - el link directo: [`releases/latest/download/CatasKiosk.apk`](https://github.com/mulloa240/freekiosk/releases/latest/download/CatasKiosk.apk).
 
-## ✨ Key capabilities
+   El navegador de la tablet va a pedir permiso para "instalar apps desconocidas" la primera vez.
+2. Para el bloqueo completo, dejá la app como Device Owner con el equipo recién reseteado:
 
-| Area | What you get | Deep dive |
-|---|---|---|
-| Kiosk modes | WebView, External App, Dashboard, Media/Multi-App evolution | [Features and Modes](docs/features-and-modes.md) |
-| Device control | Lock task, boot behavior, status bar policies, PIN access | [Installation](docs/installation.md) |
-| Automation | 40+ REST endpoints, MQTT discovery for Home Assistant | [Integrations](docs/INTEGRATIONS.md) |
-| Provisioning | ADB command-based configuration and scripting | [ADB Configuration](docs/adb-configuration.md) |
+   ```bash
+   adb shell dpm set-device-owner com.freekiosk/.DeviceAdminReceiver
+   ```
 
-## 📦 Install in 60 seconds
+3. Abrí la app y emparejala: muestra un código que se valida desde el portal (**Flota → Emparejamiento**). Al validarlo, la tablet recibe su token y carga el kiosk-client sola.
 
-1. Download the latest APK from [Releases](https://github.com/rushb-fr/freekiosk/releases).
-2. Install on Android 8.0+ tablet.
-3. Configure URL/app + PIN.
-4. Start kiosk mode.
+Una vez instalada, cada tablet revisa los releases de este repo al arrancar y se actualiza sola cuando hay una versión más nueva. Con Device Owner la instalación es silenciosa; sin Device Owner, Android muestra el diálogo de instalación estándar.
 
-For production lockdown, use Device Owner mode:
+> Cada release trae el mismo APK con dos nombres. `CatasKiosk.apk` es fijo, para el link de descarga. `FreeKiosk-v<versión>.apk` es el que busca el actualizador de la app, así que no hay que cambiarlo. El `applicationId` sigue siendo `com.freekiosk`, para que las tablets ya instaladas se actualicen encima sin reinstalar ni volver a emparejar.
+
+## 🧭 Dónde está el código propio del fork
+
+Todo lo que no figura acá es FreeKiosk original. Para ver el detalle completo de lo que cambió respecto del upstream, ver [Mantenerse al día con FreeKiosk](#-mantenerse-al-día-con-freekiosk).
+
+### Integración con la plataforma Catas
+
+| Qué | Dónde |
+|---|---|
+| URLs del kiosk-client y del admin-api, armado de la URL con el token | [`src/config/somelier.ts`](src/config/somelier.ts) |
+| Emparejamiento con el portal (init/validate contra admin-api, ID de instalación) | [`src/utils/somelierPairing.ts`](src/utils/somelierPairing.ts), [`src/screens/PairingScreen.tsx`](src/screens/PairingScreen.tsx) |
+| Telemetría nativa (pantalla en blanco, errores del WebView, versión real del WebView) | [`src/utils/somelierTelemetry.ts`](src/utils/somelierTelemetry.ts) |
+| Copia durable del contenido asignado (sobrevive reinicios y cortes de red) | [`src/utils/somelierContentStore.ts`](src/utils/somelierContentStore.ts) |
+| Puente WebView ↔ kiosk-client: inyección de telemetría, modo de bloqueo y config que llegan del portal, guardado/restauración de contenido | [`src/components/WebViewComponent.tsx`](src/components/WebViewComponent.tsx) (bloques marcados "Somelier") |
+| Token del dispositivo y botón "Emparejar" en Ajustes | [`src/screens/settings/tabs/GeneralTab.tsx`](src/screens/settings/tabs/GeneralTab.tsx) |
+| Rutas `Pairing` y `Diagnostics` | [`src/navigation/AppNavigator.tsx`](src/navigation/AppNavigator.tsx) |
+| Arranque: auto-update y auto-diagnóstico | [`App.tsx`](App.tsx) |
+
+### Auto-diagnóstico de compatibilidad
+
+| Qué | Dónde |
+|---|---|
+| Recolección nativa (Build, ABIs, WebView real con fallbacks para Android < 8, memoria, permisos, sondas TLS/DNS/reloj) | [`DiagnosticsModule.kt`](android/app/src/main/java/com/freekiosk/DiagnosticsModule.kt), [`DeviceStats.kt`](android/app/src/main/java/com/freekiosk/DeviceStats.kt), [`DiagnosticsPackage.kt`](android/app/src/main/java/com/freekiosk/DiagnosticsPackage.kt) |
+| Puente JS del módulo nativo | [`src/utils/DiagnosticsModule.ts`](src/utils/DiagnosticsModule.ts) |
+| Checks, veredicto, sonda ES5 en el WebView, cola offline y envío a `POST /telemetry/diagnostics` | [`src/utils/selfDiagnostic/`](src/utils/selfDiagnostic/) |
+| Pantalla y sección de Ajustes | [`src/screens/DiagnosticsScreen.tsx`](src/screens/DiagnosticsScreen.tsx), [`src/components/DiagnosticsSection.tsx`](src/components/DiagnosticsSection.tsx), [`src/components/DiagnosticProbeWebView.tsx`](src/components/DiagnosticProbeWebView.tsx) |
+| Tests | [`__tests__/selfDiagnostic/`](__tests__/selfDiagnostic/) |
+
+### Actualización, marca y distribución
+
+| Qué | Dónde |
+|---|---|
+| Auto-update al arrancar contra los releases de este repo | [`src/utils/autoUpdate.ts`](src/utils/autoUpdate.ts), [`UpdateModule.kt`](android/app/src/main/java/com/freekiosk/UpdateModule.kt) (apunta a `mulloa240/freekiosk`) |
+| Self-update habilitado, versión de la app, `BUILD_TIME` para el diagnóstico | [`android/app/build.gradle`](android/app/build.gradle) |
+| Nombre "Catas Kiosk" | [`android/app/src/main/res/values/strings.xml`](android/app/src/main/res/values/strings.xml) |
+| Íconos (isotipo Catas sobre verde bosque) y banner de Android TV | `android/app/src/main/res/mipmap-*/`, [`drawable/tv_banner.xml`](android/app/src/main/res/drawable/tv_banner.xml) |
+| Soporte de cajas Android TV (leanback, táctil opcional, `largeHeap`) | [`AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml) |
+| Traducciones es/en de la interfaz | [`src/i18n/`](src/i18n/) |
+| Compilación del APK en cada push y PR, y publicación de releases | [`.github/workflows/build-apk.yml`](.github/workflows/build-apk.yml), [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml) |
+
+### Nombres internos que siguen diciendo "somelier" o "freekiosk"
+
+La marca visible es Catas, pero varios identificadores internos mantienen el nombre anterior a propósito. Son el protocolo entre la app, el kiosk-client y el admin-api, o datos ya guardados en las tablets; renombrarlos rompería equipos instalados:
+
+- mensajes `SOMELIER_*` entre el WebView y el shell nativo;
+- claves de AsyncStorage (`@somelier_*`) y nombres de archivos y funciones `somelier*`;
+- el paquete `com.freekiosk` y el nombre del APK del release (`FreeKiosk-v*.apk`).
+
+## 🚀 Publicar una versión
+
+1. En un PR, subí la versión en tres lugares y anotá los cambios:
+   - `android/app/build.gradle`: `versionCode` (+1) y `versionName`;
+   - `package.json`: `version`;
+   - `CHANGELOG.md`: una entrada nueva arriba.
+2. Mergeá el PR a `main`. El workflow **Build APK** compila el APK y lo deja como artefacto `catas-kiosk-apk` (esto pasa en cada push y PR, sin publicar nada).
+3. Creá el tag sobre `main` y subilo:
+
+   ```bash
+   git tag v1.3.0 && git push origin v1.3.0
+   ```
+
+   El workflow **Release APK** compila y publica el release "Catas Kiosk v1.3.0" con `FreeKiosk-v1.3.0.apk` y `CatasKiosk.apk`. Desde ese momento las tablets lo detectan solas y el link de descarga ya baja la versión nueva.
+
+> El `versionName` del APK tiene que coincidir con el tag. Si no, la tablet instala la versión nueva pero sigue reportando la vieja, y vuelve a ofrecer la actualización en cada arranque.
+
+## 🛠️ Desarrollo
+
+Requisitos: Node 20+, JDK 17+ y Android SDK 26+.
 
 ```bash
-adb shell dpm set-device-owner com.freekiosk/.DeviceAdminReceiver
+npm ci                 # dependencias (aplica los parches de patches/)
+npm start              # Metro bundler
+npm run android        # correr en un equipo o emulador conectado
+npm test               # tests de Jest
+npm run lint           # ESLint
+
+cd android && ./gradlew assembleRelease   # APK release
 ```
 
-👉 Full setup guide: [docs/installation.md](docs/installation.md)
+El APK queda en `android/app/build/outputs/apk/release/`. Hay más detalle de la arquitectura (módulos nativos, pantallas, parches de dependencias) en [`CLAUDE.md`](CLAUDE.md) y en la [guía de desarrollo](docs/development.md).
 
-## 🧩 Docs map
+## 🔄 Mantenerse al día con FreeKiosk
 
-| I want to... | Go to |
+Para traer mejoras del proyecto original:
+
+```bash
+git remote add upstream https://github.com/rushb-fr/freekiosk.git   # una sola vez
+git fetch upstream
+git diff $(git merge-base main upstream/main) main --stat           # todo lo propio del fork
+git merge upstream/main                                              # en una rama, y después PR
+```
+
+## 📚 Documentación de FreeKiosk
+
+Las funciones heredadas de FreeKiosk (modos de pantalla, REST API, MQTT, aprovisionamiento por ADB) siguen documentadas en inglés en `docs/`:
+
+| Tema | Documento |
 |---|---|
-| Deploy tablets correctly | [Installation Guide](docs/installation.md) |
-| Understand display/kiosk modes | [Features and Modes](docs/features-and-modes.md) |
-| Integrate with Home Assistant | [Integrations Overview](docs/INTEGRATIONS.md) |
-| Use API endpoints | [REST API Docs](docs/rest-api.md) |
-| Configure MQTT topics/discovery | [MQTT Docs](docs/MQTT.md) |
-| Provision with scripts | [ADB Configuration](docs/adb-configuration.md) |
-| Follow release direction | [Roadmap and Changelog](docs/roadmap-and-changelog.md) |
-| Contribute code | [Development Guide](docs/development.md) |
+| Instalación y Device Owner | [docs/installation.md](docs/installation.md) |
+| Modos de pantalla | [docs/features-and-modes.md](docs/features-and-modes.md) |
+| REST API (40+ endpoints) | [docs/rest-api.md](docs/rest-api.md) |
+| MQTT y Home Assistant | [docs/MQTT.md](docs/MQTT.md), [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) |
+| Aprovisionamiento por ADB | [docs/adb-configuration.md](docs/adb-configuration.md) |
+| Preguntas frecuentes | [docs/faq.md](docs/faq.md) |
 
-## 🥊 FreeKiosk vs Fully Kiosk Browser
+## 📄 Licencia y créditos
 
-| Feature | FreeKiosk | Fully Kiosk |
-|---------|-----------|-------------|
-| Price | 🟢 Free | 🔴 Paid per device |
-| Open-source | 🟢 MIT | 🔴 Closed source |
-| Device Owner mode | ✅ | ✅ |
-| REST API | ✅ | ✅ |
-| MQTT + Home Assistant discovery | ✅ | ❌ |
-| Cloud fleet management | Roadmap | ✅ |
+MIT, igual que el original. Ver [LICENSE](LICENSE).
 
-## 🛠️ Tech stack
-
-- React Native + TypeScript
-- Kotlin native modules (Android policy and system control)
-- Android SDK 26+ (Android 8+)
-
-## 🗺️ Roadmap snapshot
-
-- `v1.2.x`: reliability and operational hardening
-- `v1.3.x`: richer deployment and media workflows
-- `v2.x`: optional cloud/fleet management direction
-
-Detailed notes: [docs/roadmap-and-changelog.md](docs/roadmap-and-changelog.md)
-
-## 🤝 Contributing
-
-Contributions are welcome.
-
-- Guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Issues: [GitHub Issues](https://github.com/rushb-fr/freekiosk/issues)
-- Discussions: [GitHub Discussions](https://github.com/rushb-fr/freekiosk/discussions)
-
----
-
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE).
-
-<div align="center">
-  <img src="https://img.shields.io/github/stars/rushb-fr/freekiosk?style=social" alt="Stars">
-  <img src="https://img.shields.io/github/forks/rushb-fr/freekiosk?style=social" alt="Forks">
-  <img src="https://img.shields.io/github/issues/rushb-fr/freekiosk" alt="Issues">
-  <img src="https://img.shields.io/github/license/rushb-fr/freekiosk" alt="License">
-</div>
-
-<div align="center">
-  <p><strong>Made with ❤️ in France by Rushb</strong></p>
-  <p>
-    <a href="https://freekiosk.app">Website</a> •
-    <a href="https://github.com/rushb-fr/freekiosk">GitHub</a> •
-    <a href="mailto:contact@rushb.fr">Contact</a>
-  </p>
-</div>
+Catas Kiosk se basa en [FreeKiosk](https://github.com/rushb-fr/freekiosk), creado por [Rushb](https://rushb.fr). Gracias a su equipo por publicarlo como software libre.
