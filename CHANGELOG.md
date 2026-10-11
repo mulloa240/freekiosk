@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [1.3.3] - 2026-10-11 (Catas)
+
+### Fixed
+- **Falso "Menos de 2 GB de RAM" en equipos de 2 GB.** `memory.total` pedía 2048 MB, pero un equipo de 2 GB reporta menos porque el kernel, la GPU y el módem reservan parte. En la flota, la Samsung SM-T515 reporta 1776 MB, la Huawei AGR-W09 1881 y el Sanci SC-TV114 1976. Así, todo equipo de 2 GB salía "con limitaciones" solo por la RAM. El corte baja a 1536 MB: avisa en equipos de 1 a 1,5 GB y sigue fallando por debajo de 768.
+
 ## [1.3.2] - 2026-10-10 (Catas)
 
 ### Changed
