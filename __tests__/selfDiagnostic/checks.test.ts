@@ -36,7 +36,8 @@ describe('buildChecks', () => {
     expect(map.get('device.abi')?.status).toBe('warn');
     // TV con control remoto: no tener táctil es lo esperado.
     expect(map.get('device.touch')?.status).toBe('ok');
-    expect(map.get('memory.total')?.status).toBe('warn');
+    // 1900 MB: es una caja de 2 GB.
+    expect(map.get('memory.total')?.status).toBe('ok');
     expect(map.get('webview.updatable')?.status).toBe('warn');
     expect(map.get('probe.run')?.status).toBe('skip');
     expect(map.get('net.kioskClient')?.status).toBe('fail');
@@ -84,6 +85,19 @@ describe('buildChecks', () => {
     expect(map.get('memory.class')?.status).toBe('warn');
     expect(map.get('memory.lowNow')?.status).toBe('warn');
     expect(map.get('storage.free')?.status).toBe('fail');
+  });
+
+  it('RAM: un equipo de 2 GB (reporta 1,7-1,95 GB) está ok; uno de 1,5 GB avisa', () => {
+    const status = (totalMB: number) => {
+      const snapshot = healthySnapshot({ memory: { ...healthySnapshot().memory, totalMB } });
+      return byId(buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true })).get('memory.total')?.status;
+    };
+    // Valores reales de la flota: SM-T515, Huawei AGR-W09 y Sanci SC-TV114.
+    expect(status(1776)).toBe('ok');
+    expect(status(1881)).toBe('ok');
+    expect(status(1976)).toBe('ok');
+    expect(status(1400)).toBe('warn');
+    expect(status(700)).toBe('fail');
   });
 
   it('desfase de reloj: warn a los 5 min, fail a partir de un día', () => {

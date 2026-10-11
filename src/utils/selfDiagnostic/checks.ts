@@ -18,7 +18,11 @@ export const THRESHOLDS = {
   // Lo mínimo que se puede inferir de la sonda sin User-Agent: `noModule`
   // existe desde Chrome 61.
   chromeNoModule: 61,
-  ramOkMB: 2048,
+  // Un equipo de 2 GB no reporta 2048 MB: kernel, GPU y módem reservan parte.
+  // En la flota: SM-T515 1776, Huawei AGR-W09 1881, Sanci SC-TV114 1976. Con
+  // el corte en 2048 todo equipo de 2 GB salía "Menos de 2 GB de RAM"; en
+  // 1536 separa los de 2 GB de los de 1-1,5 GB.
+  ramOkMB: 1536,
   ramMinMB: 768,
   heapOkMB: 192,
   storageWarnMB: 500,
