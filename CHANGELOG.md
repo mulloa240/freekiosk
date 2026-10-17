@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [1.3.4] - 2026-10-17 (Catas)
+
+### Added
+- **Capacidades de TV en el auto-diagnóstico**, para las pausas publicitarias sobre la señal de TV. Dos checks informativos, que nunca bajan el veredicto:
+  - `tv.cec`: si el equipo tiene HDMI-CEC y si la app puede usarlo para pedirle al televisor que cambie de entrada (pausa a pantalla completa). No envía ningún comando. Si el CEC existe pero el firmware no lo deja usar, dice si hay root (`su`) para habilitarlo.
+  - `tv.inputs`: en un televisor con Android TV, qué entradas de señal ve la app (HDMI, antena) para mostrarlas con publicidad encima. En una caja, un stick o una tablet la lista viene vacía.
+- Los datos van en `device.tv` del reporte. El servidor los guarda sin cambios, porque esa sección acepta campos nuevos.
+
 ## [1.3.3] - 2026-10-11 (Catas)
 
 ### Fixed
