@@ -1,4 +1,4 @@
-import { buildChecks, versionInconsistencies, parseKernel } from '../../src/utils/selfDiagnostic/checks';
+import { buildChecks, versionInconsistencies, parseKernel, tvChecks } from '../../src/utils/selfDiagnostic/checks';
 import { buildNetworkSection } from '../../src/utils/selfDiagnostic/network';
 import { computeVerdict } from '../../src/utils/selfDiagnostic/verdict';
 import {
@@ -226,5 +226,65 @@ describe('versionInconsistencies', () => {
     expect(parseKernel('4.9.113-g1234')).toEqual([4, 9]);
     expect(parseKernel('')).toBeUndefined();
     expect(parseKernel(undefined)).toBeUndefined();
+  });
+});
+
+describe('tvChecks (pausas publicitarias sobre la señal de TV)', () => {
+  const ids = (tv: Parameters<typeof tvChecks>[0]) => new Map(tvChecks(tv).map((c) => [c.id, c]));
+
+  it('sin la sección tv (app vieja o falla nativa) no agrega nada', () => {
+    expect(tvChecks(undefined)).toEqual([]);
+  });
+
+  it('caja X96 sin CEC accesible ni entradas: las dos capacidades quedan en skip y no tocan el veredicto', () => {
+    const tv = { cecFeature: true, cecPermission: false, cecDevices: [{ path: '/dev/cec', openable: false }], cecSysfs: true, suPresent: false, liveTvFeature: false, inputs: [] };
+    const map = ids(tv);
+    expect(map.get('tv.cec')).toMatchObject({ status: 'skip', impact: 'compat', value: 'firmware' });
+    expect(map.get('tv.cec')?.detail).toMatch(/root o un firmware/);
+    expect(map.get('tv.inputs')).toMatchObject({ status: 'skip', value: 0 });
+    expect(map.get('tv.inputs')?.detail).toMatch(/caja, stick o tablet/);
+    expect(computeVerdict(tvChecks(tv))).toBe('compatible');
+  });
+
+  it('caja con root: lo dice, para poder habilitar CEC por ahí', () => {
+    const map = ids({ cecDevices: [{ path: '/dev/cec', openable: false }], suPresent: true });
+    expect(map.get('tv.cec')).toMatchObject({ status: 'skip', value: 'root' });
+    expect(map.get('tv.cec')?.detail).toMatch(/root \(su\)/);
+  });
+
+  it('CEC que la app puede abrir: ok', () => {
+    expect(ids({ cecDevices: [{ path: '/dev/cec0', openable: true }] }).get('tv.cec')).toMatchObject({ status: 'ok', value: 'app' });
+    expect(ids({ cecPermission: true }).get('tv.cec')?.status).toBe('ok');
+  });
+
+  it('sin rastro de CEC: skip "Sin HDMI-CEC"', () => {
+    expect(ids({ cecFeature: false, cecDevices: [], cecSysfs: false }).get('tv.cec')).toMatchObject({ status: 'skip', value: false, detail: 'Sin HDMI-CEC' });
+  });
+
+  it('televisor Android TV: lista sus entradas de señal y deja fuera las apps de TV y las ocultas', () => {
+    const map = ids({
+      liveTvFeature: true,
+      inputs: [
+        { id: 'hdmi1', type: 1007, passthrough: true, label: 'HDMI 1' },
+        { id: 'hdmi2', type: 1007, passthrough: true },
+        { id: 'tuner', type: 0, passthrough: false, label: 'Antena' },
+        { id: 'com.app/.Canales', type: 0, passthrough: false, label: 'App de canales', hidden: true },
+        { id: 'com.iptv/.Input', type: 1000, passthrough: false, label: 'IPTV' },
+      ],
+    });
+    expect(map.get('tv.inputs')).toMatchObject({ status: 'ok', value: 'HDMI 1, HDMI, Antena' });
+    expect(map.get('tv.inputs')?.detail).toMatch(/publicidad encima/);
+  });
+
+  it('Android TV sin entradas visibles para la app: skip con su motivo', () => {
+    expect(ids({ liveTvFeature: true, inputs: [] }).get('tv.inputs')?.detail).toMatch(/sin entradas de señal visibles/);
+  });
+
+  it('buildChecks las incluye cuando el equipo las informa', () => {
+    const snapshot = sanciTvBoxSnapshot();
+    snapshot.device.tv = { cecFeature: true, cecDevices: [], inputs: [] };
+    const map = byId(buildChecks({ snapshot, network: buildNetworkSection(snapshot), probe: FULL_PROBE, paired: true, displayMode: 'webview' }));
+    expect(map.get('tv.cec')?.status).toBe('skip');
+    expect(map.get('tv.inputs')?.status).toBe('skip');
   });
 });

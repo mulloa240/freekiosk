@@ -1,4 +1,4 @@
-import type { CheckImpact, CheckStatus, DiagnosticCheck, NativeDiagnosticsSnapshot, NetworkSection, ProbeSection } from './types';
+import type { CheckImpact, CheckStatus, DiagnosticCheck, NativeDiagnosticsSnapshot, NetworkSection, ProbeSection, TvCapabilities, TvInput } from './types';
 
 /*
  * Reglas de compatibilidad. Puras: reciben el snapshot nativo, la sección de
@@ -161,6 +161,65 @@ function brokerCheck(results: Record<string, unknown>): DiagnosticCheck {
   return check('net.broker', 'skip', 'setup');
 }
 
+// TvInputInfo.TYPE_* → nombre legible, para cuando la entrada no trae etiqueta.
+const TV_INPUT_TYPES: Record<number, string> = {
+  0: 'Antena',
+  1001: 'Compuesto',
+  1002: 'S-Video',
+  1003: 'SCART',
+  1004: 'Componente',
+  1005: 'VGA',
+  1006: 'DVI',
+  1007: 'HDMI',
+  1008: 'DisplayPort',
+};
+
+/** Una entrada con señal propia del televisor: HDMI, antena… (no apps de TV). */
+function isTvSignalInput(input: TvInput): boolean {
+  return !input.hidden && (input.passthrough === true || input.type === 0);
+}
+
+function tvInputLabel(input: TvInput): string {
+  return input.label || TV_INPUT_TYPES[input.type ?? -1] || `entrada ${input.type ?? '?'}`;
+}
+
+/*
+ * Capacidades para pausas publicitarias sobre la señal de TV. Son
+ * informativas: `ok` si el equipo puede, `skip` si no, nunca bajan el
+ * veredicto (una tablet no tiene por qué tener entradas de TV).
+ *  - tv.cec: cortar a pantalla completa pidiéndole al televisor que cambie
+ *    de entrada (cajas, sticks).
+ *  - tv.inputs: mostrar la señal con publicidad encima (televisores con
+ *    Android TV).
+ */
+export function tvChecks(tv: TvCapabilities | undefined): DiagnosticCheck[] {
+  if (!tv) return [];
+  const checks: DiagnosticCheck[] = [];
+
+  const devices = tv.cecDevices ?? [];
+  const cecUsable = tv.cecPermission === true || devices.some((d) => d.openable === true);
+  const cecPresent = tv.cecFeature === true || devices.length > 0 || tv.cecSysfs === true;
+  if (cecUsable) {
+    checks.push(check('tv.cec', 'ok', 'compat', 'app', 'HDMI-CEC disponible: el equipo puede pedirle al televisor que cambie de entrada (pausas a pantalla completa)'));
+  } else if (cecPresent) {
+    const how = tv.suPresent ? 'el equipo tiene root (su): se puede habilitar por ahí' : 'haría falta root o un firmware que lo exponga';
+    checks.push(check('tv.cec', 'skip', 'compat', tv.suPresent ? 'root' : 'firmware', `El equipo tiene HDMI-CEC, pero el firmware no deja usarlo a las apps: ${how}`));
+  } else {
+    checks.push(check('tv.cec', 'skip', 'compat', false, 'Sin HDMI-CEC'));
+  }
+
+  const signal = (tv.inputs ?? []).filter(isTvSignalInput);
+  if (signal.length > 0) {
+    const labels = signal.map(tvInputLabel).join(', ').slice(0, 120);
+    checks.push(check('tv.inputs', 'ok', 'compat', labels, 'Televisor con entradas accesibles: el kiosko puede mostrar su señal con publicidad encima (banner o pantalla completa, sin cortes)'));
+  } else if (tv.liveTvFeature) {
+    checks.push(check('tv.inputs', 'skip', 'compat', 0, 'Android TV sin entradas de señal visibles para la app'));
+  } else {
+    checks.push(check('tv.inputs', 'skip', 'compat', 0, 'No es un televisor con entradas propias (caja, stick o tablet)'));
+  }
+  return checks;
+}
+
 export interface BuildChecksInput {
   snapshot: NativeDiagnosticsSnapshot;
   network: NetworkSection;
@@ -312,6 +371,9 @@ export function buildChecks(input: BuildChecksInput): DiagnosticCheck[] {
       checks.push(results[key] === true ? check(id, 'ok', 'compat', true) : check(id, 'ok', 'compat', false, why));
     }
   }
+
+  // --- Señal de TV (informativo) ---
+  checks.push(...tvChecks(device.tv));
 
   // --- Red (setup) ---
   const netType = network.type;
