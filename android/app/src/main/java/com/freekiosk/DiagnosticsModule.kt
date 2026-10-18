@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.tv.TvInputManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -17,6 +18,8 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
+import java.io.File
+import java.io.RandomAccessFile
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.TimeZone
@@ -105,6 +108,9 @@ class DiagnosticsModule(private val reactContext: ReactApplicationContext) :
                 putInt("dpi", metrics.densityDpi)
                 putDouble("density", metrics.density.toDouble())
             })
+            // Va dentro de `device` (sección passthrough del contrato): el
+            // servidor la guarda sin conocerla.
+            putMap("tv", tvCapabilities())
         }
         root.putMap("device", device)
 
@@ -171,6 +177,54 @@ class DiagnosticsModule(private val reactContext: ReactApplicationContext) :
         })
 
         return root
+    }
+
+    /**
+     * Qué puede hacer el equipo con la señal de TV (pausas publicitarias):
+     *  - HDMI-CEC: pedirle al televisor que cambie de entrada (pantalla
+     *    completa). Se mira si existe y si la app puede usarlo; no se manda
+     *    ningún comando, que cambiaría la entrada del televisor.
+     *  - Entradas de TV (TvInputManager): en un televisor con Android TV la
+     *    app puede mostrar sus entradas HDMI o la antena con contenido encima.
+     *    En una caja o un stick la lista viene vacía.
+     */
+    private fun tvCapabilities(): WritableMap {
+        val ctx = reactContext
+        val pm = ctx.packageManager
+        val tv = Arguments.createMap()
+
+        tv.putBoolean("cecFeature", safe { pm.hasSystemFeature("android.hardware.hdmi.cec") })
+        // Permiso de sistema (signature|privileged): una app normal no lo tiene.
+        tv.putBoolean("cecPermission", safe {
+            ctx.checkSelfPermission("android.permission.HDMI_CEC") == PackageManager.PERMISSION_GRANTED
+        })
+        systemProperty("ro.hdmi.device_type")?.let { tv.putString("hdmiDeviceType", it) }
+        val devices = Arguments.createArray()
+        CEC_DEVICE_PATHS.map(::File).filter { safe { it.exists() } }.forEach { node ->
+            devices.pushMap(Arguments.createMap().apply {
+                putString("path", node.path)
+                // Abrir no envía nada: solo prueba si el firmware deja usarlo.
+                putBoolean("openable", safe { RandomAccessFile(node, "rw").use { true } })
+            })
+        }
+        tv.putArray("cecDevices", devices)
+        tv.putBoolean("cecSysfs", safe { File("/sys/class/cec").exists() })
+        tv.putBoolean("suPresent", SU_PATHS.any { safe { File(it).exists() } })
+
+        tv.putBoolean("liveTvFeature", safe { pm.hasSystemFeature(PackageManager.FEATURE_LIVE_TV) })
+        val inputs = Arguments.createArray()
+        val manager = safeOrNull { ctx.getSystemService(Context.TV_INPUT_SERVICE) as? TvInputManager }
+        safeOrNull { manager?.tvInputList }?.take(MAX_TV_INPUTS)?.forEach { info ->
+            inputs.pushMap(Arguments.createMap().apply {
+                putString("id", info.id.take(120))
+                putInt("type", info.type)
+                putBoolean("passthrough", info.isPassthroughInput)
+                safeOrNull { info.loadLabel(ctx)?.toString() }?.let { putString("label", it.take(60)) }
+                putBoolean("hidden", safe { info.isHidden(ctx) })
+            })
+        }
+        tv.putArray("inputs", inputs)
+        return tv
     }
 
     // ---- helpers ----
@@ -291,5 +345,12 @@ class DiagnosticsModule(private val reactContext: ReactApplicationContext) :
             e is java.net.SocketTimeoutException || name.contains("Timeout") -> "timeout"
             else -> "other"
         }
+    }
+
+    private companion object {
+        // Nodos de HDMI-CEC del kernel: genérico (/dev/cecN) y Amlogic (/dev/cec).
+        val CEC_DEVICE_PATHS = listOf("/dev/cec", "/dev/cec0", "/dev/cec1")
+        val SU_PATHS = listOf("/system/xbin/su", "/system/bin/su", "/sbin/su", "/su/bin/su")
+        const val MAX_TV_INPUTS = 16
     }
 }

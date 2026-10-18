@@ -33,6 +33,31 @@ export interface EndpointProbe {
   serverDateMs?: number;
 }
 
+/** Una entrada del televisor vista por TvInputManager (HDMI, antena…). */
+export interface TvInput {
+  id: string;
+  // TvInputInfo.TYPE_*: 0 sintonizador, 1007 HDMI, etc.
+  type?: number;
+  passthrough?: boolean;
+  label?: string;
+  hidden?: boolean;
+}
+
+/**
+ * Qué puede hacer el equipo con la señal de TV (pausas publicitarias). Viaja
+ * dentro de `device`, que el servidor acepta con campos extra.
+ */
+export interface TvCapabilities {
+  cecFeature?: boolean;
+  cecPermission?: boolean;
+  hdmiDeviceType?: string;
+  cecDevices?: Array<{ path: string; openable?: boolean }>;
+  cecSysfs?: boolean;
+  suPresent?: boolean;
+  liveTvFeature?: boolean;
+  inputs?: TvInput[];
+}
+
 /** Lo que devuelve DiagnosticsModule.collect() (capa nativa). */
 export interface NativeDiagnosticsSnapshot {
   device: {
@@ -58,6 +83,7 @@ export interface NativeDiagnosticsSnapshot {
     faketouch?: boolean;
     hasDpad?: boolean;
     screen?: { w?: number; h?: number; dpi?: number; density?: number };
+    tv?: TvCapabilities;
   };
   memory: {
     totalMB?: number;
